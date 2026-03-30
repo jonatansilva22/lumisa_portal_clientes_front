@@ -2,9 +2,11 @@ import { CartIconWithBadge } from "../ui/CartIconWithBadge";
 import { NotificationIcon } from "../ui/NotificationIcon";
 import { UserName } from "../ui/UserName";
 import { UserAvatar } from "../ui/UserAvatar";
+import { useAuth } from "../hooks/useAuth";
 
 
 export function Header() {
+  const { user } = useAuth();
   return (
     <header className="w-full flex items-center justify-between bg-gray-200 px-4 sm:px-12 py-0 shadow-sm h-18">
       {/* Logo alineado a la izquierda */}
@@ -15,7 +17,7 @@ export function Header() {
       <div className="flex items-center gap-6 h-full">
         <CartIconWithBadge count={1} className="scale-125" />
         <NotificationIcon count={2} className="scale-125" />
-        <UserName name="USUARIO" className="text-xl" />
+        <UserName name={user ? `${user.name} ${user.last_name}` : "USUARIO"} className="text-xl" />
         <UserAvatar />
       </div>
     </header>
