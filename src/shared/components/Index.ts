@@ -4,3 +4,4 @@ export * from "./SearchBar";
 export * from "./SidebarAdmin";
 export * from "./SidebarAdviser";
 export * from "./SidebarClient";
+export * from "./LogoutModal";
