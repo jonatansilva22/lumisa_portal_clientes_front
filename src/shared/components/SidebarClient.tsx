@@ -1,5 +1,9 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Logo } from "../ui/Logo";
 import { SidebarItem } from "../ui/SidebarItem";
+import { LogoutModal } from "./LogoutModal";
+import { useAuth } from "../hooks/useAuth";
 import {
   HomeIcon,
   ShoppingBagIcon,
@@ -10,6 +14,16 @@ import {
 import LumisaLogo from "../../assets/lumisa-logo.png";
 
 export function SidebarClient() {
+  const [openModal, setOpenModal] = useState(false);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    setOpenModal(false);
+    navigate("/");
+  };
+
   return (
     <aside className="bg-neutral-800 text-white w-48 flex flex-col py-6 px-2 h-full">
       {/* Logo */}
@@ -26,8 +40,17 @@ export function SidebarClient() {
       <div className="flex-1" />
       {/* Salir */}
       <div className="w-full">
-        <SidebarItem icon={<ArrowLeftOnRectangleIcon className="w-6 h-6" />} label="Salir" />
+        <SidebarItem
+          icon={<ArrowLeftOnRectangleIcon className="w-6 h-6" />} 
+          label="Salir"
+          onClick={() => setOpenModal(true)}
+        />
       </div>
+      <LogoutModal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        onConfirm={handleLogout}
+      />
     </aside>
   );
 }
