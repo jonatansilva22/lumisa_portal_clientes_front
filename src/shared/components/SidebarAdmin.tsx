@@ -37,8 +37,8 @@ export function SidebarAdmin() {
         <SidebarItem icon={<HomeIcon className="w-6 h-6" />} label="Inicio" />
         <SidebarItem icon={<BuildingOffice2Icon className="w-6 h-6" />} label="Empresas" />
         <SidebarItem icon={<ShoppingBagIcon className="w-6 h-6" />} label="Pedidos" />
-        <SidebarItem icon={<UserIcon className="w-6 h-6" />} label="Usuarios" />
-        <SidebarItem icon={<CubeIcon className="w-6 h-6" />} label="Productos" />
+        <SidebarItem icon={<UserIcon className="w-6 h-6" />} label="Usuarios" onClick={() => navigate('/users')} />
+        <SidebarItem icon={<CubeIcon className="w-6 h-6" />} label="Productos" onClick={() => navigate('/products')} />
         <SidebarItem icon={<ChatBubbleLeftRightIcon className="w-6 h-6" />} label="Chat" />
       </nav>
       <div className="flex-1" />
