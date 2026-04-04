@@ -34,7 +34,7 @@ export function SidebarClient() {
       <nav className="flex flex-col gap-2 w-full">
         <SidebarItem icon={<HomeIcon className="w-6 h-6" />} label="Inicio" />
         <SidebarItem icon={<ShoppingBagIcon className="w-6 h-6" />} label="Pedidos" />
-        <SidebarItem icon={<CubeIcon className="w-6 h-6" />} label="Productos" />
+        <SidebarItem icon={<CubeIcon className="w-6 h-6" />} label="Productos" onClick={() => navigate('/catalog')} />
         <SidebarItem icon={<ChatBubbleLeftRightIcon className="w-6 h-6" />} label="Chat" />
       </nav>
       <div className="flex-1" />
