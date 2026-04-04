@@ -30,11 +30,11 @@ export function Table<T extends object>({ columns, data, className = "" }: Table
         </thead>
         <tbody>
           {data.map((row, rIdx) => (
-            <tr key={rIdx} className="border-b last:border-b-0 hover:bg-gray-50">
+            <tr key={rIdx} className="hover:bg-gray-100">
               {columns.map((col, cIdx) => (
                 <td
                   key={cIdx}
-                  className={`px-4 py-2 align-middle ${col.className || ""}`}
+                  className={`px-4 py-2 align-middle border-b border-gray-200 ${col.className || ""}`}
                 >
                   {typeof col.accessor === "function"
                     ? col.accessor(row)
