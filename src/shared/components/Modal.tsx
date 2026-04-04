@@ -21,7 +21,8 @@ export function Modal({ open, onClose, children, className = "", showHeader = tr
       />
       {/* Fondo oscuro y contenido */}
       <div
-        className={`bg-white rounded-xl shadow-lg p-8 min-w-[400px] max-w-[90vw] sm:min-w-[500px] sm:max-w-[600px] relative ${className}`}
+        className={`bg-white rounded-xl shadow-lg p-2 xs:p-4 sm:p-8 w-full max-w-[98vw] sm:max-w-[600px] relative overflow-y-auto`}
+        style={{ width: '100%', maxWidth: 600, maxHeight: '90vh' }}
         onClick={e => e.stopPropagation()}
       >
           {showHeader && (
