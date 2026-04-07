@@ -8,12 +8,19 @@ import { DeleteButton } from "../../../shared/ui/Index";
 import { FilterDropdown } from "../../../shared/ui/Index";
 import { LoadingSpinner } from "../../../shared/ui/Index";
 import { useUsers } from "../hooks/useUsers";
+import { CreateUserModal } from "../components/CreateUserModal";
+import { EditUserModal } from "../components/EditUserModal";
+import { ConfirmModal } from "../components/ConfirmModal";
+import type { User, UserCreate } from "../types/user";
 
 export function UsersPage() {
-  const { users, loading, handleDelete } = useUsers();
+  const { users, loading, handleToggleActive, handleCreate, handleUpdate } = useUsers();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("Todos los roles");
   const [statusFilter, setStatusFilter] = useState("Todos los estados");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [togglingUserId, setTogglingUserId] = useState<number | null>(null);
 
   const totalUsuarios = users.length;
   const totalClientes = users.filter((u) => u.role.name === "cliente").length;
@@ -42,6 +49,8 @@ export function UsersPage() {
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("es-MX");
 
+  const togglingUser = users.find((u) => u.id === togglingUserId);
+
   return (
     <div className="h-screen flex flex-col">
       <Header />
@@ -52,7 +61,7 @@ export function UsersPage() {
           {/* Titulo y boton */}
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold">Gestión de Usuarios</h1>
-            <Button>+ Nuevo Usuario</Button>
+            <Button onClick={() => setShowCreateModal(true)}>+ Nuevo Usuario</Button>
           </div>
 
           {/* Tarjetas de conteo */}
@@ -64,7 +73,7 @@ export function UsersPage() {
                 <p className="text-sm text-gray-500">Total de Usuarios</p>
               </div>
             </div>
-            <div className="border rounded-lg p-4 flex items-center gap-3 h-full">
+            <div className="border rounded-lg p-4 flex items-center gap-3">
               <span className="text-2xl">👤</span>
               <div>
                 <p className="text-xl font-bold">{totalClientes}</p>
@@ -119,9 +128,18 @@ export function UsersPage() {
                 {
                   header: "Usuario",
                   accessor: (u) => (
-                    <div>
-                      <p className="font-medium">{u.name} {u.last_name}</p>
-                      <p className="text-xs text-gray-400">id: {u.id}</p>
+                    <div className="flex items-center gap-3">
+                      {u.image_url ? (
+                        <img src={u.image_url}
+                          className="w-8 h-8 rounded-full object-cover border"
+                          onError={(e) => (e.currentTarget.style.display = "none")} />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm">👤</div>
+                      )}
+                      <div>
+                        <p className="font-medium">{u.name} {u.last_name}</p>
+                        <p className="text-xs text-gray-400">id: {u.id}</p>
+                      </div>
                     </div>
                   ),
                 },
@@ -143,6 +161,16 @@ export function UsersPage() {
                   ),
                 },
                 {
+                  header: "Empresa",
+                  accessor: (u) => u.role.name === "cliente" ? (
+                    <span className="text-sm text-gray-600">
+                      {u.company_id ?? <span className="text-gray-400 italic">Sin empresa</span>}
+                    </span>
+                  ) : (
+                    <span className="text-gray-300 text-xs">—</span>
+                  ),
+                },
+                {
                   header: "Fecha de registro",
                   accessor: (u) => formatDate(u.created_at),
                 },
@@ -150,10 +178,12 @@ export function UsersPage() {
                   header: "Acción",
                   accessor: (u) => (
                     <div className="flex gap-2">
-                      <button className="border rounded-full px-4 py-1 text-sm hover:bg-gray-100 transition">
+                      <button
+                        onClick={() => setEditingUser(u)}
+                        className="border rounded-full px-4 py-1 text-sm hover:bg-gray-100 transition">
                         Editar
                       </button>
-                      <DeleteButton onClick={() => handleDelete(u.id)} />
+                      <DeleteButton onClick={() => setTogglingUserId(u.id)} />
                     </div>
                   ),
                 },
@@ -162,6 +192,43 @@ export function UsersPage() {
           )}
         </main>
       </div>
+
+      {/* Modal crear usuario */}
+      {showCreateModal && (
+        <CreateUserModal
+          onClose={() => setShowCreateModal(false)}
+          onCreate={async (data) => {
+            await handleCreate(data);
+            setShowCreateModal(false);
+          }}
+        />
+      )}
+
+      {/* Modal editar usuario */}
+      {editingUser && (
+        <EditUserModal
+          user={editingUser}
+          onClose={() => setEditingUser(null)}
+          onUpdate={async (id, data) => {
+            await handleUpdate(id, data);
+            setEditingUser(null);
+          }}
+        />
+      )}
+
+      {/* Confirmación toggle activo */}
+      {togglingUserId !== null && (
+        <ConfirmModal
+          message={`¿Desea ${togglingUser?.active ? "desactivar" : "activar"} a este usuario?`}
+          confirmLabel={togglingUser?.active ? "Desactivar" : "Activar"}
+          confirmColor={togglingUser?.active ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}
+          onCancel={() => setTogglingUserId(null)}
+          onConfirm={async () => {
+            await handleToggleActive(togglingUserId);
+            setTogglingUserId(null);
+          }}
+        />
+      )}
     </div>
   );
 }

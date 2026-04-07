@@ -27,6 +27,6 @@ export async function updateUser(id: number, data: Partial<UserCreate>): Promise
   return res.data;
 }
 
-export async function deleteUser(id: number): Promise<void> {
-  await api.delete(`/users/${id}`, getAuthHeader());
+export async function toggleUserActive(id: number): Promise<void> {
+  await api.patch(`/users/${id}/active`, {}, getAuthHeader());
 }
