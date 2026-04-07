@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getUsers, createUser, updateUser, deleteUser } from "../services/users";
+import { getUsers, createUser, updateUser, toggleUserActive } from "../services/users";
 import type { User, UserCreate } from "../types/user";
 import toast from "react-hot-toast";
 
@@ -24,8 +24,9 @@ export function useUsers() {
       await createUser(data);
       toast.success("Usuario creado exitosamente");
       fetchUsers();
-    } catch {
-      toast.error("Error al crear usuario");
+    } catch (error: any) {
+      const msg = error?.response?.data?.detail;
+      toast.error(msg || "Error al crear usuario");
     }
   };
 
@@ -39,13 +40,13 @@ export function useUsers() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleToggleActive = async (id: number) => {
     try {
-      await deleteUser(id);
-      toast.success("Usuario eliminado exitosamente");
+      await toggleUserActive(id);
+      toast.success("Estado actualizado exitosamente");
       fetchUsers();
     } catch {
-      toast.error("Error al eliminar usuario");
+      toast.error("Error al actualizar estado");
     }
   };
 
@@ -53,5 +54,5 @@ export function useUsers() {
     fetchUsers();
   }, []);
 
-  return { users, loading, handleCreate, handleUpdate, handleDelete };
+  return { users, loading, handleCreate, handleUpdate, handleToggleActive };
 }
