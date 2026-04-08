@@ -27,7 +27,7 @@ export function QuantityInput({
       className={`flex items-center border-2 border-orange-500 rounded-xl px-3 py-1 select-none ${className}`}
     >
       <button
-        className="text-xl px-2 focus:outline-none cursor-pointer"
+        className="text-xl px-2 focus:outline-none hover:bg-orange-100 cursor-pointer"
         onClick={handleDecrease}
         disabled={value <= min}
         type="button"
@@ -36,7 +36,7 @@ export function QuantityInput({
       </button>
       <span className="mx-3 w-4 text-center">{value}</span>
       <button
-        className="text-xl px-2 focus:outline-none cursor-pointer"
+        className="text-xl px-2 focus:outline-none hover:bg-orange-100 cursor-pointer"
         onClick={handleIncrease}
         disabled={value >= max}
         type="button"
