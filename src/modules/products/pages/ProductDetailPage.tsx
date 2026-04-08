@@ -4,6 +4,9 @@ import { Card } from "../../../shared/ui/Card";
 import { Header, SidebarClient } from "../../../shared/components/Index";
 import { BackButton } from "../../../shared/ui/BackButton";
 import { useState } from "react";
+import { useAuth } from '../../../shared/hooks/useAuth';
+import { useCart } from '../../carts/hooks/useCart';
+import toast from 'react-hot-toast';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -11,6 +14,9 @@ export default function ProductDetailPage() {
   const { products, types, units } = useProducts();
   const product = products.find(p => String(p.id) === String(id));
   const [quantity, setQuantity] = useState(1);
+  const { addToCart, loading, error } = useCart();
+  const { isAdmin } = useAuth();
+  // Eliminamos success, usaremos toast
 
   if (!product) {
     return (
@@ -30,6 +36,16 @@ export default function ProductDetailPage() {
   const unit = units.find(u => u.id === product.unit_id);
   const priceNum = typeof product.price === "number" ? product.price : Number(product.price);
   const total = (priceNum * quantity).toFixed(2);
+
+  const handleAddToCart = async () => {
+    if (!product) return;
+    try {
+      await addToCart({ product_id: product.id, quantity });
+      toast.success('¡Producto agregado al carrito!');
+    } catch (e) {
+      toast.error('Error al agregar al carrito');
+    }
+  };
 
   return (
     <div className="h-screen flex flex-col">
@@ -87,31 +103,38 @@ export default function ProductDetailPage() {
             </Card>
             {/* Compra */}
             <Card className="flex flex-col gap-6 items-start p-4 transition-transform duration-300 hover:scale-105">
-              <div className="flex items-center gap-4 w-full border-b border-gray-200 pb-2 mb-2">
-                <span className="font-bold text-xl">Cantidad:</span>
-                <div className="flex items-center border rounded-lg px-3 py-2 border-orange-500">
+              {isAdmin ? (
+                <div className="w-full text-center text-gray-400 text-xl py-8">Los administradores no pueden agregar productos al carrito.</div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-4 w-full border-b border-gray-200 pb-2 mb-2">
+                    <span className="font-bold text-xl">Cantidad:</span>
+                    <div className="flex items-center border rounded-lg px-3 py-2 border-orange-500">
+                      <button
+                        className="text-2xl cursor-pointer px-3 text-orange-500 disabled:text-gray-300 hover:bg-orange-100"
+                        onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                        disabled={quantity <= 1}
+                      >-</button>
+                      <span className="mx-3 min-w-[32px] text-center text-xl">{quantity}</span>
+                      <button
+                        className="text-2xl cursor-pointer px-3 text-orange-500 disabled:text-gray-300 hover:bg-orange-100"
+                        onClick={() => setQuantity(q => Math.min(product.quantity, q + 1))}
+                        disabled={quantity >= product.quantity}
+                      >+</button>
+                    </div>
+                  </div>
+                  <div className="text-xl w-full border-b border-gray-200 pb-2 mb-2">
+                    <span className="font-bold">Precio total:</span> ${total}
+                  </div>
                   <button
-                    className="text-2xl cursor-pointer px-3 text-orange-500 disabled:text-gray-300 hover:bg-orange-100"
-                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                    disabled={quantity <= 1}
-                  >-</button>
-                  <span className="mx-3 min-w-[32px] text-center text-xl">{quantity}</span>
-                  <button
-                    className="text-2xl cursor-pointer px-3 text-orange-500 disabled:text-gray-300 hover:bg-orange-100"
-                    onClick={() => setQuantity(q => Math.min(product.quantity, q + 1))}
-                    disabled={quantity >= product.quantity}
-                  >+</button>
-                </div>
-              </div>
-              <div className="text-xl w-full border-b border-gray-200 pb-2 mb-2">
-                <span className="font-bold">Precio total:</span> ${total}
-              </div>
-              <button
-                className="mt-2 w-full border border-orange-500 text-orange-500 rounded-full py-2 text-xl font-semibold hover:bg-orange-200 transition cursor-pointer"
-                // onClick={...}
-              >
-                Agregar al carrito
-              </button>
+                    className="mt-2 w-full border border-orange-500 text-orange-500 rounded-full py-2 text-xl font-semibold hover:bg-orange-200 transition cursor-pointer disabled:opacity-60"
+                    onClick={handleAddToCart}
+                    disabled={loading}
+                  >
+                    {loading ? 'Agregando...' : 'Agregar al carrito'}
+                  </button>
+                </>
+              )}
             </Card>
           </div>
         </main>
