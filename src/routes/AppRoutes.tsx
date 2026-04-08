@@ -11,6 +11,7 @@ import { ClientPage } from "../modules/auth/pages/ClientPage";
 import { EjemploPage } from "../modules/products/pages/EjemploPage";
 import ProductsPage from "../modules/products/pages/ProductsPage";
 import {UsersPage} from "../modules/users/pages/UsersPage";
+import  CartPage  from "../modules/carts/pages/CartPage";
 
 export function AppRoutes() {
   return (
@@ -61,6 +62,12 @@ export function AppRoutes() {
         </ProtectedRoute>
       } />
 
+      <Route path="/cart"
+      element={
+        <ProtectedRoute allowedRoles={[2,3]}>
+          <CartPage />
+        </ProtectedRoute>
+      } />
 
       {/* Rutas protegida solo para asesores */}
       <Route path="/adviser" 
