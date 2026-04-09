@@ -53,7 +53,7 @@ export function CompaniesPage() {
           </div>
 
           {/* Tarjetas de conteo */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="border rounded-lg p-4 flex items-center gap-3">
               <span className="text-2xl">🏢</span>
               <div>
