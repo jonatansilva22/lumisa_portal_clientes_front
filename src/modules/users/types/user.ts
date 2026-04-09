@@ -11,6 +11,7 @@ export type User = {
   image_url?: string | null;
   active: boolean;
   role: Role;
+  company_id?: number | null;
   created_at: string;
   updated_at?: string | null;
 };
