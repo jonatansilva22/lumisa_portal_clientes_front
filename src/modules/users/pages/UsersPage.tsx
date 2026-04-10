@@ -228,7 +228,7 @@ export function UsersPage() {
         />
       )}
 
-      {/* Confirmación toggle activo */}
+      {/* Confirmacion toggle activo */}
       {togglingUserId !== null && (
         <ConfirmModal
           message={`¿Desea ${togglingUser?.active ? "desactivar" : "activar"} a este usuario?`}
