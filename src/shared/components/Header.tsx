@@ -18,7 +18,7 @@ export function Header() {
         <CartIconWithBadge count={1} className="scale-125" />
         <NotificationIcon count={2} className="scale-125" />
         <UserName name={user ? `${user.name} ${user.last_name}` : "USUARIO"} className="text-xl" />
-        <UserAvatar />
+        <UserAvatar src={user?.image_url} />
       </div>
     </header>
   );

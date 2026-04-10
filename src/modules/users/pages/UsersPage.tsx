@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "../../../shared/components/Index";
 import { SidebarAdmin } from "../../../shared/components/Index";
 import { SearchBar } from "../../../shared/components/Index";
@@ -11,6 +11,7 @@ import { useUsers } from "../hooks/useUsers";
 import { CreateUserModal } from "../components/CreateUserModal";
 import { EditUserModal } from "../components/EditUserModal";
 import { ConfirmModal } from "../components/ConfirmModal";
+import { getCompanies } from "../services/companies";
 import type { User, UserCreate } from "../types/user";
 
 export function UsersPage() {
@@ -21,6 +22,17 @@ export function UsersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [togglingUserId, setTogglingUserId] = useState<number | null>(null);
+  const [companies, setCompanies] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    getCompanies().then(setCompanies).catch(() => {});
+  }, []);
+
+  const getCompanyName = (company_id?: number | null) => {
+    if (!company_id) return null;
+    const company = companies.find((c) => c.id === company_id);
+    return company ? company.name : null;
+  };
 
   const totalUsuarios = users.length;
   const totalClientes = users.filter((u) => u.role.name === "cliente").length;
@@ -164,7 +176,7 @@ export function UsersPage() {
                   header: "Empresa",
                   accessor: (u) => u.role.name === "cliente" ? (
                     <span className="text-sm text-gray-600">
-                      {u.company_id ?? <span className="text-gray-400 italic">Sin empresa</span>}
+                      {getCompanyName(u.company_id) ?? <span className="text-gray-400 italic">Sin empresa</span>}
                     </span>
                   ) : (
                     <span className="text-gray-300 text-xs">—</span>
@@ -216,7 +228,7 @@ export function UsersPage() {
         />
       )}
 
-      {/* Confirmación toggle activo */}
+      {/* Confirmacion toggle activo */}
       {togglingUserId !== null && (
         <ConfirmModal
           message={`¿Desea ${togglingUser?.active ? "desactivar" : "activar"} a este usuario?`}
