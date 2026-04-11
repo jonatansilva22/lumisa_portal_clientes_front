@@ -94,9 +94,10 @@ export default function ProductsPage() {
       setShowDeleteModal(false);
       reload();
       toast.success("Producto eliminado correctamente");
-    } catch {
-      setDeleteError("Error al eliminar producto");
-      toast.error("Error al eliminar producto");
+    } catch (err: any) {
+      // Solo mostrar el error en el toast, no en el modal
+      setDeleteError("");
+      toast.error(err?.message || "Error al eliminar producto");
     } finally {
       setDeleteLoading(false);
     }
