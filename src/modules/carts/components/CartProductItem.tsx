@@ -34,6 +34,9 @@ export function CartProductItem({ item, onQuantityChange, onRemove, className }:
       <div className="flex-1 min-w-0 flex flex-col gap-2 sm:gap-3 w-full md:mx-4">
         <div className="font-bold text-lg sm:text-2xl truncate md:break-words md:whitespace-normal">{product.name}</div>
         <div className="text-gray-500 text-sm sm:text-base truncate md:break-words md:whitespace-normal">{product.description || 'Sin descripción'}</div>
+        {!product.active && (
+          <div className="text-red-600 font-semibold text-sm sm:text-base mt-1">Este producto no está disponible actualmente.</div>
+        )}
         <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2">
           <QuantityInput
             value={item.quantity}
