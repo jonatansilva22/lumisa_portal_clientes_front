@@ -48,9 +48,14 @@ export async function updateProduct(productId: number, payload: Partial<Omit<Pro
 
 // Eliminar producto
 export async function deleteProduct(productId: number): Promise<void> {
-	await api.delete(`/products/${productId}`, {
-		headers: authHeader(),
-	});
+	try {
+		await api.delete(`/products/${productId}`, {
+			headers: authHeader(),
+		});
+	} catch (error: any) {
+		// Propaga el mensaje del backend si existe
+		throw new Error(error?.response?.data?.detail || error.message || "Error al eliminar producto");
+	}
 }
 
 
