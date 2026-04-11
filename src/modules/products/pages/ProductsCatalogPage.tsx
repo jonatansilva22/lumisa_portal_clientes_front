@@ -15,7 +15,9 @@ export default function ProductsCatalogPage() {
   const [unitFilter, setUnitFilter] = useState("Todos");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
+  // Solo productos activos para clientes y asesores
   const filteredProducts = products.filter(p => {
+    if (!p.active) return false;
     if (typeFilter !== "Todos" && String(p.type_id) !== String(typeFilter)) return false;
     if (unitFilter !== "Todos" && String(p.unit_id) !== String(unitFilter)) return false;
     if (search.trim() && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
