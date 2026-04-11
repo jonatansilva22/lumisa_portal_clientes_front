@@ -5,9 +5,11 @@ import { CartSummary } from "../components/CartSummary";
 import { Header, SidebarClient } from "../../../shared/components/Index";
 import { BackButton } from "../../../shared/ui/BackButton";
 import { LoadingSpinner } from "../../../shared/ui/LoadingSpinner";
+import { useProducts } from "../../products/hooks/useProducts";
 
 export default function CartPage() {
   const { cart, loading, error, fetchCart, updateInCart, removeFromCart, clear } = useCart();
+  const { products } = useProducts();
 
   useEffect(() => {
     fetchCart();
@@ -16,6 +18,12 @@ export default function CartPage() {
 
   const subtotal = cart?.cart_details.reduce((acc, item) => acc + Number(item.unit_price) * item.quantity, 0) || 0;
   const totalItems = cart?.cart_details.reduce((acc, item) => acc + item.quantity, 0) || 0;
+
+  // Verifica si hay productos inactivos en el carrito
+  const hasInactive = cart?.cart_details.some(item => {
+    const prod = products.find(p => p.id === item.product_id);
+    return prod && prod.active === false;
+  });
 
   return (
     <div className="h-screen flex flex-col">
@@ -60,6 +68,8 @@ export default function CartPage() {
                   onCheckout={() => {/* Aquí irá la lógica de checkout */}}
                   loading={loading}
                   className="self-start w-full md:w-auto mt-4 md:mt-0"
+                  disabled={!!hasInactive}
+                  inactiveMessage={hasInactive ? "No puedes solicitar el pedido porque hay productos no disponibles." : undefined}
                 />
               </div>
             )}
