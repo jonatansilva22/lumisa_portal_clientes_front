@@ -12,6 +12,8 @@ import { EjemploPage } from "../modules/products/pages/EjemploPage";
 import ProductsPage from "../modules/products/pages/ProductsPage";
 import {UsersPage} from "../modules/users/pages/UsersPage";
 import  CartPage  from "../modules/carts/pages/CartPage";
+import { CompaniesPage } from "../modules/companies/pages/CompaniesPage";
+import {ProfilePage} from "../modules/users/pages/ProfilePage";
 
 export function AppRoutes() {
   return (
@@ -41,10 +43,24 @@ export function AppRoutes() {
         </ProtectedRoute>
       } />
 
+      <Route path="/profile"
+      element={
+        <ProtectedRoute allowedRoles={[1,2,3]}>
+          <ProfilePage />
+        </ProtectedRoute>
+      } />
+
         <Route path="/products"
       element={
         <ProtectedRoute allowedRoles={[1]}>
           <ProductsPage />
+        </ProtectedRoute>
+      } />
+
+        <Route path="/companies"
+      element={
+        <ProtectedRoute allowedRoles={[1]}>
+          <CompaniesPage />
         </ProtectedRoute>
       } />
 
