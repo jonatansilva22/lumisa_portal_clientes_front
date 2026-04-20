@@ -5,7 +5,8 @@ import { useProducts } from "../hooks/useProducts";
 import { ProductCard } from "../components/ProductCard";
 import { ProductsFiltersBar } from "../components/ProductsFiltersBar";
 import type { Product } from "../types/product";
-import { Header, SidebarClient } from "../../../shared/components/Index";
+import { Header, SidebarClient, SidebarAdviser } from "../../../shared/components/Index";
+import { useAuth } from '../../../shared/hooks/useAuth';
 
 export default function ProductsCatalogPage() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function ProductsCatalogPage() {
   const [typeFilter, setTypeFilter] = useState("Todos");
   const [unitFilter, setUnitFilter] = useState("Todos");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const { isAdviser } = useAuth();
 
   // Solo productos activos para clientes y asesores
   const filteredProducts = products.filter(p => {
@@ -28,7 +30,7 @@ export default function ProductsCatalogPage() {
     <div className="h-screen flex flex-col">
       <Header />
       <div className="flex flex-1 min-h-0">
-        <SidebarClient />
+        {isAdviser ? <SidebarAdviser /> : <SidebarClient />}
         <main className="flex-1 p-4 overflow-y-auto">
           <div className="flex items-center gap-2 mb-4">
             <BackButton onClick={() => navigate(-1)} />
