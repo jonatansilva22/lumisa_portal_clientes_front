@@ -9,6 +9,19 @@ import {
 import { useCartStore } from '../store/cart';
 import type { CartDetailCreate, CartDetailUpdate } from '../types/cart';
 
+function toErrorMessage(err: any, fallback: string): string {
+  const detail = err?.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map((d) => (typeof d?.msg === 'string' ? d.msg : null))
+      .filter(Boolean)
+      .join(', ') || fallback;
+  }
+  if (typeof err?.message === 'string') return err.message;
+  return fallback;
+}
+
 export function useCart() {
   const { cart, setCart, loading, setLoading, error, setError } = useCartStore();
 
@@ -20,7 +33,7 @@ export function useCart() {
       const data = await getMyCart();
       setCart(data);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Error al cargar el carrito');
+      setError(toErrorMessage(err, 'Error al cargar el carrito'));
     } finally {
       setLoading(false);
     }
@@ -34,7 +47,7 @@ export function useCart() {
       const data = await addProductToCart(payload);
       setCart(data);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Error al agregar producto');
+      setError(toErrorMessage(err, 'Error al agregar producto'));
     } finally {
       setLoading(false);
     }
@@ -48,7 +61,7 @@ export function useCart() {
       const data = await updateProductInCart(productId, payload);
       setCart(data);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Error al actualizar cantidad');
+      setError(toErrorMessage(err, 'Error al actualizar cantidad'));
     } finally {
       setLoading(false);
     }
@@ -62,7 +75,7 @@ export function useCart() {
       const data = await removeProductFromCart(productId);
       setCart(data);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Error al eliminar producto');
+      setError(toErrorMessage(err, 'Error al eliminar producto'));
     } finally {
       setLoading(false);
     }
@@ -76,7 +89,7 @@ export function useCart() {
       const data = await clearCart();
       setCart(data);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Error al vaciar carrito');
+      setError(toErrorMessage(err, 'Error al vaciar carrito'));
     } finally {
       setLoading(false);
     }
