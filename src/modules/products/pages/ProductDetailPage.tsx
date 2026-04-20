@@ -1,10 +1,10 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useProducts } from "../hooks/useProducts";
 import { Card } from "../../../shared/ui/Card";
-import { Header, SidebarClient } from "../../../shared/components/Index";
+import { Header, SidebarClient, SidebarAdviser } from "../../../shared/components/Index";
+import { useAuth } from '../../../shared/hooks/useAuth';
 import { BackButton } from "../../../shared/ui/BackButton";
 import { useState } from "react";
-import { useAuth } from '../../../shared/hooks/useAuth';
 import { useCart } from '../../carts/hooks/useCart';
 import toast from 'react-hot-toast';
 
@@ -15,7 +15,7 @@ export default function ProductDetailPage() {
   const product = products.find(p => String(p.id) === String(id));
   const [quantity, setQuantity] = useState(1);
   const { addToCart, loading, error } = useCart();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isAdviser } = useAuth();
   // Eliminamos success, usaremos toast
 
   if (!product) {
@@ -23,7 +23,7 @@ export default function ProductDetailPage() {
       <div className="h-screen flex flex-col">
         <Header />
         <div className="flex flex-1 min-h-0">
-          <SidebarClient />
+          {isAdviser ? <SidebarAdviser /> : <SidebarClient />}
           <main className="flex-1 p-8 flex items-center justify-center">
             <div className="text-2xl text-gray-500">Producto no encontrado</div>
           </main>
@@ -49,9 +49,9 @@ export default function ProductDetailPage() {
 
   return (
     <div className="h-screen flex flex-col">
-      <Header />
+      <Header/>
       <div className="flex flex-1 min-h-0">
-        <SidebarClient />
+      {isAdviser ? <SidebarAdviser /> : <SidebarClient />}
         <main className="flex-1 p-8 overflow-y-auto">
           <div className="flex items-center mb-6">
             <BackButton onClick={() => navigate(-1)} className="mr-2" />
