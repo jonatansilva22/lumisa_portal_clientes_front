@@ -1,15 +1,20 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "../hooks/useCart";
 import { CartProductItem } from "../components/CartProductItem";
 import { CartSummary } from "../components/CartSummary";
-import { Header, SidebarClient } from "../../../shared/components/Index";
+import { Header, SidebarClient, SidebarAdviser } from "../../../shared/components/Index";
+import { useAuth } from '../../../shared/hooks/useAuth';
 import { BackButton } from "../../../shared/ui/BackButton";
 import { LoadingSpinner } from "../../../shared/ui/LoadingSpinner";
 import { useProducts } from "../../products/hooks/useProducts";
+import { createOrderFromCart } from "../../orders/services/orders";
+import toast from "react-hot-toast";
 
 export default function CartPage() {
-  const { cart, loading, error, fetchCart, updateInCart, removeFromCart, clear } = useCart();
+    const { isAdviser } = useAuth();
+  const { cart, loading, error, fetchCart, updateInCart, removeFromCart } = useCart();
   const { products } = useProducts();
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   useEffect(() => {
     fetchCart();
@@ -25,11 +30,26 @@ export default function CartPage() {
     return prod && prod.active === false;
   });
 
+  // Lógica para solicitar pedido
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      await createOrderFromCart();
+      await fetchCart();
+      toast.success("Pedido solicitado con exito");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Error al solicitar el pedido");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
   return (
+
     <div className="h-screen flex flex-col">
       <Header />
       <div className="flex flex-1 min-h-0">
-        <SidebarClient />
+        {isAdviser ? <SidebarAdviser /> : <SidebarClient />}
         <main className="flex-1 p-2 sm:p-4 md:p-8 overflow-y-auto flex flex-col items-center">
           <div className="w-full max-w-7xl mx-auto px-0 sm:px-2 md:px-0">
             <div className="flex items-center mb-6">
@@ -65,8 +85,8 @@ export default function CartPage() {
                 <CartSummary
                   subtotal={subtotal}
                   totalItems={totalItems}
-                  onCheckout={() => {/* Aquí irá la lógica de checkout */}}
-                  loading={loading}
+                  onCheckout={handleCheckout}
+                  loading={loading || checkoutLoading}
                   className="self-start w-full md:w-auto mt-4 md:mt-0"
                   disabled={!!hasInactive}
                   inactiveMessage={hasInactive ? "No puedes solicitar el pedido porque hay productos no disponibles." : undefined}
