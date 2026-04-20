@@ -36,7 +36,7 @@ export function SidebarAdviser() {
       <nav className="flex flex-col gap-2 w-full">
         <SidebarItem icon={<HomeIcon className="w-6 h-6" />} label="Inicio" />
         <SidebarItem icon={<BuildingOffice2Icon className="w-6 h-6" />} label="Empresas" />
-        <SidebarItem icon={<ShoppingBagIcon className="w-6 h-6" />} label="Pedidos" />
+        <SidebarItem icon={<ShoppingBagIcon className="w-6 h-6" />} label="Pedidos" onClick={() => navigate('/manage/orders')} />
         <SidebarItem icon={<UserGroupIcon className="w-6 h-6" />} label="Clientes" />
         <SidebarItem icon={<ChatBubbleLeftRightIcon className="w-6 h-6" />} label="Chat" />
         <SidebarItem icon={<CubeIcon className="w-6 h-6" />} label="Productos" onClick={() => navigate("/catalog")} />
