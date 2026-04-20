@@ -14,6 +14,10 @@ import {UsersPage} from "../modules/users/pages/UsersPage";
 import  CartPage  from "../modules/carts/pages/CartPage";
 import { CompaniesPage } from "../modules/companies/pages/CompaniesPage";
 import {ProfilePage} from "../modules/users/pages/ProfilePage";
+import OrdersPage from "../modules/orders/pages/OrdersPage";
+import OrderDetailPage from "../modules/orders/pages/OrderDetailPage";
+import ManagedOrdersPage from "../modules/orders/pages/ManagedOrdersPage";
+import ManagedOrderDetailPage from "../modules/orders/pages/ManagedOrderDetailPage";
 
 export function AppRoutes() {
   return (
@@ -82,6 +86,34 @@ export function AppRoutes() {
       element={
         <ProtectedRoute allowedRoles={[2,3]}>
           <CartPage />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/orders"
+      element={
+        <ProtectedRoute allowedRoles={[3]}>
+          <OrdersPage />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/orders/:id"
+      element={
+        <ProtectedRoute allowedRoles={[3]}>
+          <OrderDetailPage />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/manage/orders"
+      element={
+        <ProtectedRoute allowedRoles={[1, 2]}>
+          <ManagedOrdersPage/>
+        </ProtectedRoute>
+      } />
+
+      <Route path="/manage/orders/:id"
+      element={
+        <ProtectedRoute allowedRoles={[1, 2]}>
+          <ManagedOrderDetailPage/>
         </ProtectedRoute>
       } />
 
