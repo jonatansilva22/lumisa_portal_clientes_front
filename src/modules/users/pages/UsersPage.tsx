@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "../../../shared/components/Index";
 import { SidebarAdmin } from "../../../shared/components/Index";
 import { SearchBar } from "../../../shared/components/Index";
@@ -7,6 +8,7 @@ import { Button } from "../../../shared/ui/Index";
 import { DeleteButton } from "../../../shared/ui/Index";
 import { FilterDropdown } from "../../../shared/ui/Index";
 import { LoadingSpinner } from "../../../shared/ui/Index";
+import { BackButton } from "../../../shared/ui/BackButton";
 import { useUsers } from "../hooks/useUsers";
 import { CreateUserModal } from "../components/CreateUserModal";
 import { EditUserModal } from "../components/EditUserModal";
@@ -15,6 +17,7 @@ import { getCompanies } from "../services/companies";
 import type { User, UserCreate } from "../types/user";
 
 export function UsersPage() {
+  const navigate = useNavigate();
   const { users, loading, handleToggleActive, handleCreate, handleUpdate } = useUsers();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("Todos los roles");
@@ -72,7 +75,10 @@ export function UsersPage() {
 
           {/* Titulo y boton */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold">Gestión de Usuarios</h1>
+            <div className="flex items-center gap-2">
+              <BackButton onClick={() => navigate(-1)} />
+              <h1 className="text-xl sm:text-2xl font-bold">Gestión de Usuarios</h1>
+            </div>
             <Button onClick={() => setShowCreateModal(true)}>+ Nuevo Usuario</Button>
           </div>
 
