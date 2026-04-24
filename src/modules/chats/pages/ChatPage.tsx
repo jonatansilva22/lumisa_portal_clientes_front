@@ -1,0 +1,306 @@
+import { useState, useEffect, useRef } from "react";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../shared/hooks/useAuth";
+import { useAuthStore } from "../../auth/store/auth";
+import { Header } from "../../../shared/components/Index";
+import { SidebarAdmin } from "../../../shared/components/Index";
+import { BackButton } from "../../../shared/ui/BackButton";
+import { useChat } from "../hooks/useChat";
+import type { Chat } from "../types/chat";
+import type { Order } from "../../orders/types/order";
+
+const getToken = () => useAuthStore.getState().token;
+
+async function getAllOrdersLocal(): Promise<Order[]> {
+  const res = await fetch("http://localhost:8000/orders/", {
+    headers: { Authorization: `Bearer ${getToken()}` }
+  });
+  return res.json();
+}
+
+async function getMyOrdersLocal(): Promise<Order[]> {
+  const res = await fetch("http://localhost:8000/orders/me", {
+    headers: { Authorization: `Bearer ${getToken()}` }
+  });
+  return res.json();
+}
+
+function formatTime(date: string) {
+  return new Date(date).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatDateLabel(date: string) {
+  const d = new Date(date);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return "Hoy";
+  if (d.toDateString() === yesterday.toDateString()) return "Ayer";
+  return d.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
+}
+
+function isSameDay(a: string, b: string) {
+  return new Date(a).toDateString() === new Date(b).toDateString();
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  pendiente: "bg-yellow-100 text-yellow-700",
+  revisado: "bg-blue-100 text-blue-700",
+  autorizado: "bg-purple-100 text-purple-700",
+  cancelado: "bg-gray-100 text-gray-500",
+  pagado: "bg-green-100 text-green-700",
+  rechazado: "bg-red-100 text-red-700",
+};
+
+function getStatusColor(name: string) {
+  return STATUS_COLORS[name?.toLowerCase()] ?? "bg-gray-100 text-gray-500";
+}
+
+export function ChatPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const isAdmin = user?.role_id === 1 || user?.role_id === 2;
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<number | null>(null);
+  const [searchConv, setSearchConv] = useState("");
+  const { messages, loading, sending, handleSend } = useChat(selectedOrder ?? 0);
+  const [message, setMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const data = isAdmin ? await getAllOrdersLocal() : await getMyOrdersLocal();
+        setOrders(Array.isArray(data) ? data : []);
+        if (window.innerWidth >= 768 && data.length > 0) {
+          setSelectedOrder(data[0].id);
+        }
+      } catch {
+        setOrders([]);
+      } finally {
+        setLoadingOrders(false);
+      }
+    };
+    fetchOrders();
+  }, [isAdmin]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const selectedOrderData = orders.find((o) => o.id === selectedOrder);
+
+  const onSend = async () => {
+    if (!message.trim() || selectedOrder === null) return;
+
+    const receiverId = isAdmin
+      ? selectedOrderData?.client?.id
+      : (selectedOrderData as any)?.advisor?.id;
+
+    if (!receiverId) {
+      toast.error("Este pedido no tiene asesor asignado aún");
+      return;
+    }
+
+    await handleSend({ order_id: selectedOrder, receiver_id: receiverId, message: message.trim() });
+    setMessage("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); }
+  };
+
+  const filteredOrders = orders.filter((o) =>
+    `Pedido #${o.id} ${o.folio}`.toLowerCase().includes(searchConv.toLowerCase())
+  );
+
+  const showList = selectedOrder === null;
+
+  return (
+    <div className="h-screen flex flex-col">
+      <Header />
+      <div className="flex flex-1 min-h-0">
+        <div className="hidden md:block">
+          <SidebarAdmin />
+        </div>
+        <main className="flex-1 flex overflow-hidden">
+
+          {/* Panel izquierdo */}
+          <div className={`flex flex-col border-r border-gray-200 bg-white w-full md:w-64 lg:w-80 ${showList ? "flex" : "hidden"} md:flex`}>
+            <div className="px-4 py-4 border-b border-gray-100 bg-gray-50">
+              <div className="flex items-center gap-2 mb-3">
+                <BackButton onClick={() => navigate(-1)} />
+                <h2 className="font-bold text-gray-800 text-lg">Mensajes</h2>
+              </div>
+              <div className="relative">
+                <input
+                  value={searchConv}
+                  onChange={(e) => setSearchConv(e.target.value)}
+                  placeholder="Buscar pedido..."
+                  className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 pl-9"
+                />
+                <svg className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
+              {loadingOrders ? (
+                <div className="flex justify-center mt-8">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              ) : filteredOrders.length === 0 ? (
+                <p className="text-xs text-gray-400 text-center mt-8">Sin pedidos</p>
+              ) : (
+                filteredOrders.map((order) => {
+                  const statusName = (order as any).status?.name ?? "";
+                  return (
+                    <button
+                      key={order.id}
+                      onClick={() => setSelectedOrder(order.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-3.5 hover:bg-blue-50 transition-colors text-left ${
+                        selectedOrder === order.id ? "bg-blue-50 border-l-4 border-blue-600" : "border-l-4 border-transparent"
+                      }`}
+                    >
+                      <div className="w-11 h-11 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm">
+                        P
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center">
+                          <p className="font-semibold text-gray-800 text-sm truncate">Pedido #{order.id}</p>
+                          <span className="text-[10px] text-gray-400 flex-shrink-0">{order.folio}</span>
+                        </div>
+                        <div className="mt-0.5">
+                          {statusName && (
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${getStatusColor(statusName)}`}>
+                              {statusName}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Panel derecho */}
+          <div className={`flex-1 flex-col ${!showList ? "flex" : "hidden"} md:flex`} style={{ background: "#f0f2f5" }}>
+            <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="md:hidden w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500 transition"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">P</div>
+                <div>
+                  <p className="font-semibold text-gray-800 text-sm">
+                    {selectedOrderData ? `Pedido #${selectedOrderData.id} — ${selectedOrderData.folio}` : "Selecciona un pedido"}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {(selectedOrderData as any)?.status?.name ?? ""}
+                  </p>
+                </div>
+              </div>
+              <button className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500 transition">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-1">
+              {!selectedOrder ? (
+                <div className="flex flex-col justify-center items-center h-full gap-2">
+                  <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-3xl">💬</div>
+                  <p className="text-gray-500 text-sm font-medium">Selecciona un pedido</p>
+                </div>
+              ) : loading ? (
+                <div className="flex justify-center items-center h-full">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="flex flex-col justify-center items-center h-full gap-2">
+                  <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-3xl">💬</div>
+                  <p className="text-gray-500 text-sm font-medium">No hay mensajes aún</p>
+                  <p className="text-gray-400 text-xs">Sé el primero en escribir</p>
+                </div>
+              ) : (
+                messages.map((msg: Chat, i: number) => {
+                  const isMe = msg.sender_id === user?.id;
+                  const showDate = i === 0 || !isSameDay(msg.sent_at, messages[i - 1].sent_at);
+                  return (
+                    <div key={msg.id}>
+                      {showDate && (
+                        <div className="flex items-center justify-center my-4">
+                          <span className="bg-white text-gray-500 text-xs font-medium px-3 py-1 rounded-full shadow-sm border border-gray-100 capitalize">
+                            {formatDateLabel(msg.sent_at)}
+                          </span>
+                        </div>
+                      )}
+                      <div className={`flex items-end gap-2 mb-1 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                        <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-semibold ${isMe ? "bg-gray-700" : "bg-blue-600"}`}>
+                          {isMe ? user?.name?.charAt(0).toUpperCase() : "U"}
+                        </div>
+                        <div className={`flex flex-col gap-0.5 max-w-[70%] md:max-w-xs lg:max-w-md ${isMe ? "items-end" : "items-start"}`}>
+                          <div className={`px-4 py-2.5 text-sm shadow-sm ${isMe ? "bg-blue-600 text-white rounded-2xl rounded-br-sm" : "bg-white text-gray-800 rounded-2xl rounded-bl-sm border border-gray-100"}`}>
+                            <p className="leading-relaxed">{msg.message}</p>
+                          </div>
+                          <div className={`flex items-center gap-1 px-1 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                            <span className="text-[10px] text-gray-400">{formatTime(msg.sent_at)}</span>
+                            {isMe && (
+                              <span className={`text-[11px] ${msg.read ? "text-blue-500" : "text-gray-400"}`}>
+                                {msg.read ? "✓✓" : "✓"}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center gap-2">
+              <input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Escribe un mensaje..."
+                disabled={!selectedOrder}
+                className="flex-1 bg-gray-100 border border-transparent rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-blue-300 transition-colors disabled:opacity-50"
+              />
+              <button
+                onClick={onSend}
+                disabled={sending || !message.trim() || !selectedOrder}
+                className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 ml-0.5">
+                  <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
