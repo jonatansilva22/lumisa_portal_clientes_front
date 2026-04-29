@@ -81,7 +81,7 @@ export default function OrderDetailPage() {
 
       try {
         const products = await fetchProducts();
-        const nameById = products.reduce<Record<number, string>>((acc, product) => {
+        const nameById = (products as Array<{ id: number; name: string }>).reduce<Record<number, string>>((acc, product) => {
           acc[product.id] = product.name;
           return acc;
         }, {});
@@ -121,7 +121,7 @@ export default function OrderDetailPage() {
     const clientNameFromOrder = (order as any).client_name || (order as any)?.client?.name;
     if (clientNameFromOrder) return clientNameFromOrder;
 
-    if (user && user.id === (order.client_id ?? order.client?.id)) {
+    if (user && user.id === (order.client_id ?? (order.client && typeof order.client === 'object' && 'id' in order.client ? (order.client as { id: number }).id : undefined))) {
       const fullName = `${user.name} ${user.last_name ?? ""}`.trim();
       return fullName || "Cliente sin nombre";
     }
@@ -165,13 +165,11 @@ export default function OrderDetailPage() {
 
   const handleProceedToPay = () => {
     if (!order) return;
-
     if (!canProceedToPay) {
       toast.error("Este pedido solo puede pagarse cuando este autorizado");
       return;
     }
-
-    toast.success("Pedido autorizado. El modulo de pagos se habilitara en la siguiente fase");
+    navigate(`/pay/${order!.id}`);
   };
 
   if (!hasValidId) {
