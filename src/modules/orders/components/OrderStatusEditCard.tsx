@@ -10,18 +10,20 @@ interface OrderStatusEditCardProps {
   statuses: OrderStatus[];
   saving: boolean;
   onSave: (statusId: number) => void | Promise<void>;
+  disabled?: boolean;
 }
 
-export function OrderStatusEditCard({ currentStatusId, statuses, saving, onSave }: OrderStatusEditCardProps) {
+export function OrderStatusEditCard({ currentStatusId, statuses, saving, onSave, disabled }: OrderStatusEditCardProps) {
   const [selectedStatusId, setSelectedStatusId] = useState<number | null>(currentStatusId);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
 
   const selectableStatuses = useMemo(() => {
+    if (disabled) return [];
     return statuses.filter((status) => {
       const normalizedName = status.name.toLowerCase();
       return !normalizedName.includes("revisad") && !normalizedName.includes("pagad");
     });
-  }, [statuses]);
+  }, [statuses, disabled]);
 
   useEffect(() => {
     const currentIsSelectable = selectableStatuses.some((status) => status.id === currentStatusId);
@@ -133,12 +135,17 @@ export function OrderStatusEditCard({ currentStatusId, statuses, saving, onSave 
         <div className="flex justify-end">
           <Button
             onClick={() => setOpenConfirmModal(true)}
-            disabled={!hasChanged || saving || selectableStatuses.length === 0}
+            disabled={disabled || !hasChanged || saving || selectableStatuses.length === 0}
             className="whitespace-nowrap mt-4! bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {saving ? "Guardando..." : "Confirmar cambio de estado"}
           </Button>
         </div>
+            {disabled && (
+              <div className="mt-4 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-emerald-700 font-semibold text-center">
+                El pedido está pagado y su estado ya no puede ser modificado.
+              </div>
+            )}
       </Card>
 
       <Modal open={openConfirmModal} onClose={() => (!saving ? setOpenConfirmModal(false) : null)}>
