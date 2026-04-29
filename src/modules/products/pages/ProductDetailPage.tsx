@@ -18,14 +18,15 @@ export default function ProductDetailPage() {
   const { isAdmin, isAdviser } = useAuth();
   // Eliminamos success, usaremos toast
 
-  if (!product) {
+  // Si el producto no existe o está inactivo y el usuario no es admin, no mostrar detalles
+  if (!product || (!isAdmin && !product.active)) {
     return (
       <div className="h-screen flex flex-col">
         <Header />
         <div className="flex flex-1 min-h-0">
           {isAdviser ? <SidebarAdviser /> : <SidebarClient />}
           <main className="flex-1 p-8 flex items-center justify-center">
-            <div className="text-2xl text-gray-500">Producto no encontrado</div>
+            <div className="text-2xl text-gray-500">Producto no encontrado o inactivo</div>
           </main>
         </div>
       </div>
