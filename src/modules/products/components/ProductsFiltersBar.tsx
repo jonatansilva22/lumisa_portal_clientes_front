@@ -17,6 +17,8 @@ interface ProductsFiltersBarProps {
   units: Unit[];
   isAdmin: boolean;
   onNewProduct: () => void;
+  sortDesc: boolean;
+  onSortDescChange: (desc: boolean) => void;
 }
 
 export function ProductsFiltersBar({
@@ -29,7 +31,9 @@ export function ProductsFiltersBar({
   unitFilter,
   onUnitFilterChange,
   types,
-  units
+  units,
+  sortDesc,
+  onSortDescChange
 }: ProductsFiltersBarProps) {
   return (
     <div className="w-full flex justify-center">
@@ -41,6 +45,14 @@ export function ProductsFiltersBar({
             placeholder="Buscar producto"
             className="px-3 py-2 w-44 md:w-64 bg-white rounded-lg shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-blue-200 transition-all"
           />
+                    <button
+            type="button"
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none"
+            onClick={() => onSortDescChange(!sortDesc)}
+            title={sortDesc ? "Orden descendente (más reciente primero)" : "Orden ascendente (más antiguo primero)"}
+          >
+            {sortDesc ? "Más recientes primero" : "Más antiguos primero"}
+          </button>
           {typeof filter !== 'undefined' && typeof onFilterChange !== 'undefined' && (
             <select
               className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none"
@@ -73,6 +85,7 @@ export function ProductsFiltersBar({
             ))}
           </select>
         </div>
+        {/* Fin de filtros */}
       </Card>
     </div>
   );
