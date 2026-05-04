@@ -5,9 +5,6 @@ import { Routes, Route } from "react-router-dom";
 import LoginPage from "../modules/auth/pages/LoginPage";
 import { ProtectedRoute } from "../shared/components/ProtectedRoute";
 import { UnauthorizedPage } from "../modules/auth/pages/UnauthorizedPage";
-import { AdminPage } from "../modules/auth/pages/AdminPage";
-import { AdviserPage } from "../modules/auth/pages/AdviserPage";
-import { ClientPage } from "../modules/auth/pages/ClientPage";
 import { EjemploPage } from "../modules/products/pages/EjemploPage";
 import ProductsPage from "../modules/products/pages/ProductsPage";
 import {UsersPage} from "../modules/users/pages/UsersPage";
@@ -20,6 +17,9 @@ import ManagedOrdersPage from "../modules/orders/pages/ManagedOrdersPage";
 import ManagedOrderDetailPage from "../modules/orders/pages/ManagedOrderDetailPage";
 import {ChatPage} from "../modules/chats/pages/ChatPage";
 import PaymentsPayPage from "../modules/payments/pages/PaymentsPayPage";
+import ClientDashboardPage from "../modules/dashboards/pages/ClientDashboardPage";
+import AdminDashboardPage from "../modules/dashboards/pages/AdminDashboardPage";
+import AdvisorDashboardPage from "../modules/dashboards/pages/AdvisorDashboardPage";
 
 export function AppRoutes() {
   return (
@@ -31,7 +31,7 @@ export function AppRoutes() {
       <Route path="/admin" 
       element={
         <ProtectedRoute allowedRoles={[1]}>
-          <AdminPage />
+          <AdminDashboardPage />
         </ProtectedRoute>
       } />
 
@@ -137,7 +137,7 @@ export function AppRoutes() {
       <Route path="/adviser" 
       element={
         <ProtectedRoute allowedRoles={[2]}>
-          <AdviserPage />
+          <AdvisorDashboardPage />
         </ProtectedRoute>
       } />
 
@@ -146,7 +146,7 @@ export function AppRoutes() {
       <Route path="/client" 
       element={
         <ProtectedRoute allowedRoles={[3]}>
-          <ClientPage />
+          <ClientDashboardPage />
         </ProtectedRoute>
       } />
 
