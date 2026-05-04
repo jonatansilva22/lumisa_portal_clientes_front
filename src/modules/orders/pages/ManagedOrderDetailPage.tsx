@@ -12,6 +12,9 @@ import { OrderStatusEditCard } from "../components/OrderStatusEditCard";
 import { OrderAdvisorCard } from "../components/OrderAdvisorCard";
 import { useManagedOrderDetail } from "../hooks/useManagedOrderDetail";
 import { fetchProducts } from "../../products/services/products";
+import { usePaymentsByOrder, useUpdatePaymentStatus } from "../../payments/hooks/usePayments";
+import { usePaymentStatuses } from "../../payments/hooks/usePaymentStatuses";
+import { ManualPaymentStatusCard } from "../../payments/components/ManualPaymentStatusCard";
 
 function statusStyles(statusName: string): string {
   const normalized = statusName.toLowerCase();
@@ -113,6 +116,17 @@ export default function ManagedOrderDetailPage() {
     }
   };
 
+
+  // --- PAGOS MANUALES: integración para admin/asesor ---
+  const { payments: rawPayments, fetchPayments } = usePaymentsByOrder(orderId);
+  const payments = (rawPayments ?? []);
+  const { statuses: paymentStatuses } = usePaymentStatuses();
+  const { updateStatus, loading: updatingPayment } = useUpdatePaymentStatus();
+  // Solo mostrar para pagos manuales pendientes
+  const manualPayments = payments.filter(
+    (p) => (p.method_id === 2 || p.method_id === 3) && p.status_id === 1
+  );
+
   const sidebar = isAdmin ? <SidebarAdmin /> : <SidebarAdviser />;
 
   if (!hasValidId) {
@@ -189,6 +203,25 @@ export default function ManagedOrderDetailPage() {
               )}
 
               <OrderProductsTableCard order={order} productNames={productNames} />
+
+              {/* Validación de pagos manuales para admin/asesor */}
+              {manualPayments.length > 0 && paymentStatuses.length > 0 && manualPayments.map(payment => (
+                <ManualPaymentStatusCard
+                  key={payment.id}
+                  currentStatusId={payment.status_id}
+                  statuses={paymentStatuses}
+                  saving={updatingPayment}
+                  onSave={async (newStatusId) => {
+                    try {
+                      await updateStatus(payment.id, newStatusId);
+                      toast.success('Estado de pago actualizado');
+                      fetchPayments();
+                    } catch (err) {
+                      toast.error('Error al actualizar el estado del pago');
+                    }
+                  }}
+                />
+              ))}
             </div>
           )}
         </main>
