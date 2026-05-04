@@ -8,6 +8,7 @@ import type { Product } from "../types/product";
 import { Header, SidebarClient, SidebarAdviser } from "../../../shared/components/Index";
 import { useAuth } from '../../../shared/hooks/useAuth';
 
+
 export default function ProductsCatalogPage() {
   const navigate = useNavigate();
   const { products, types, units, loading } = useProducts();
@@ -15,16 +16,20 @@ export default function ProductsCatalogPage() {
   const [typeFilter, setTypeFilter] = useState("Todos");
   const [unitFilter, setUnitFilter] = useState("Todos");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [sortDesc, setSortDesc] = useState(true);
   const { isAdviser } = useAuth();
 
   // Solo productos activos para clientes y asesores
-  const filteredProducts = products.filter(p => {
-    if (!p.active) return false;
-    if (typeFilter !== "Todos" && String(p.type_id) !== String(typeFilter)) return false;
-    if (unitFilter !== "Todos" && String(p.unit_id) !== String(unitFilter)) return false;
-    if (search.trim() && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
+  const filteredProducts = products
+    .filter(p => {
+      if (!p.active) return false;
+      if (typeFilter !== "Todos" && String(p.type_id) !== String(typeFilter)) return false;
+      if (unitFilter !== "Todos" && String(p.unit_id) !== String(unitFilter)) return false;
+      if (search.trim() && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+      return true;
+    })
+    .slice()
+    .sort((a, b) => sortDesc ? b.id - a.id : a.id - b.id);
 
   return (
     <div className="h-screen flex flex-col">
@@ -48,6 +53,8 @@ export default function ProductsCatalogPage() {
               units={units}
               isAdmin={false}
               onNewProduct={() => {}}
+              sortDesc={sortDesc}
+              onSortDescChange={setSortDesc}
             />
           </div>
           {loading ? (
