@@ -133,7 +133,7 @@ export function OrderCard({ order, orderNumber, statuses, onDetails }: OrderCard
         {/* Botón */}
         <Button
           onClick={() => onDetails(order.id)}
-          className="mt-0! w-full! border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 text-base py-2 shadow-none!"
+          className="mt-0! w-full! border border-blue-500 text-white bg-blue-600 hover:bg-blue-700 text-base py-2 shadow-none! transition-colors"
         >
           Ver detalles
         </Button>
