@@ -12,6 +12,8 @@ interface OrdersFiltersBarProps {
   onYearFilterChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   years: number[];
   statuses: OrderStatus[];
+  sortDesc?: boolean;
+  onSortDescChange?: (desc: boolean) => void;
 }
 
 export function OrdersFiltersBar({
@@ -23,11 +25,23 @@ export function OrdersFiltersBar({
   onYearFilterChange,
   years,
   statuses,
+  sortDesc = true,
+  onSortDescChange,
 }: OrdersFiltersBarProps) {
   return (
     <div className="w-full flex justify-center mb-4">
       <Card className="p-5 flex flex-col items-center max-w-4xl w-full bg-linear-to-br from-gray-50 to-white border border-gray-200 shadow-md">
         <div className="w-full flex flex-wrap justify-center items-center gap-4">
+          {typeof onSortDescChange === 'function' && (
+            <button
+              type="button"
+              className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none"
+              onClick={() => onSortDescChange(!sortDesc)}
+              title={sortDesc ? "Orden descendente (más reciente primero)" : "Orden ascendente (más antiguo primero)"}
+            >
+              {sortDesc ? "Más recientes primero" : "Más antiguos primero"}
+            </button>
+          )}
           {typeof search === "string" && typeof onSearchChange === "function" ? (
             <SearchBar
               value={search}
