@@ -31,6 +31,7 @@ export default function ProductsPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [formError, setFormError] = useState("");
   const [deleteError, setDeleteError] = useState("");
+  const [sortDesc, setSortDesc] = useState(true);
 
   const filteredProducts = useMemo(() => {
     let filtered = products;
@@ -38,8 +39,10 @@ export default function ProductsPage() {
     if (typeFilter !== "Todos") filtered = filtered.filter(p => String(p.type_id) === String(typeFilter));
     if (unitFilter !== "Todos") filtered = filtered.filter(p => String(p.unit_id) === String(unitFilter));
     if (search.trim()) filtered = filtered.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+    // Ordenar por ID
+    filtered = filtered.slice().sort((a, b) => sortDesc ? b.id - a.id : a.id - b.id);
     return filtered;
-  }, [products, search, filter, typeFilter, unitFilter]);
+  }, [products, search, filter, typeFilter, unitFilter, sortDesc]);
 
   const handleOpenCreate = () => { setEditingProduct(null); setFormError(""); setShowFormModal(true); };
   const handleEdit = (product: Product) => { setEditingProduct(product); setFormError(""); setShowFormModal(true); };
@@ -136,6 +139,8 @@ export default function ProductsPage() {
                 units={units}
                 isAdmin={isAdmin}
                 onNewProduct={handleOpenCreate}
+                sortDesc={sortDesc}
+                onSortDescChange={setSortDesc}
               />
             </div>
             {isAdmin && (
