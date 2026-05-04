@@ -17,6 +17,8 @@ interface ManagedOrdersTableProps {
   statuses: OrderStatus[];
   detailPath: string;
   clientImageById?: Record<number, string>;
+  sortDesc?: boolean;
+  onSortDescChange?: (desc: boolean) => void;
 }
 
 function resolveStatusName(order: Order, statuses: OrderStatus[]): string {
@@ -79,17 +81,18 @@ function formatDate(value?: string): string {
   }).format(date);
 }
 
+
 export function ManagedOrdersTable({ orders, statuses, detailPath, clientImageById = {} }: ManagedOrdersTableProps) {
   const navigate = useNavigate();
 
-  const rows: OrderRow[] = orders.map((order, index) => ({
+  const rows: OrderRow[] = orders.map((order: Order, index: number) => ({
     ...order,
     rowNumber: index + 1,
     clientDisplay: resolveClientName(order),
     companyDisplay: resolveCompanyName(order),
     adviserDisplay: resolveAdviserName(order),
     statusDisplay: resolveStatusName(order, statuses),
-    // clientImageUrl eliminado
+    clientImageUrl: resolveClientImage(order, clientImageById),
   }));
 
   return (
@@ -102,17 +105,17 @@ export function ManagedOrdersTable({ orders, statuses, detailPath, clientImageBy
         { header: "Asesor", accessor: "adviserDisplay" },
         {
           header: "Estado",
-          accessor: (row) => (
+          accessor: (row: OrderRow) => (
             <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(row.statusDisplay)}`}>
               {row.statusDisplay}
             </span>
           ),
         },
-        { header: "Total", accessor: (row) => formatMoney(row.total_payment) },
-        { header: "Fecha de creación", accessor: (row) => formatDate(row.created_at) },
+        { header: "Total", accessor: (row: OrderRow) => formatMoney(row.total_payment) },
+        { header: "Fecha de creación", accessor: (row: OrderRow) => formatDate(row.created_at) },
         {
           header: <span className="flex justify-center w-full">Acciones</span>,
-          accessor: (row) => (
+          accessor: (row: OrderRow) => (
             <div className="flex justify-center w-full">
               <Button
                 onClick={() => navigate(`${detailPath}/${row.id}`)}
