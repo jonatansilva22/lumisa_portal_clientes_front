@@ -29,49 +29,53 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="w-full flex flex-col gap-6">
+    <form onSubmit={onSubmit} className="w-full flex flex-col gap-7">
       <div>
-        <Label htmlFor="email" className="mb-1 block text-gray-700">
+        <Label htmlFor="email" className="mb-1 block text-blue-900 font-semibold">
           Correo electrónico:
         </Label>
         <Input
           id="email"
           type="email"
-          placeholder="ejemplo@mail.com"
+          placeholder="Ingrese su correo electrónico"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          className="w-full h-10 border border-gray-300 rounded px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full h-11 rounded-xl px-4 border border-blue-200 bg-blue-50 text-blue-900 placeholder-black-200 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
           required
         />
       </div>
       <div>
-        <Label htmlFor="password" className="mb-1 block text-gray-700">
+        <Label htmlFor="password" className="mb-1 block text-blue-900 font-semibold">
           Contraseña:
         </Label>
         <Input
           id="password"
           type={showPassword ? "text" : "password"}
-          placeholder="********"
+          placeholder="Ingrese su contraseña"
           value={password}
           onChange={e => setPassword(e.target.value)}
-          className="w-full h-10 border border-gray-300 rounded px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full h-11 rounded-xl px-4 border border-blue-200 bg-blue-50 text-blue-900 placeholder-black-200 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
           required
         />
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 mb-2">
         <input
           type="checkbox"
           id="showPassword"
           checked={showPassword}
           onChange={() => setShowPassword(v => !v)}
-          className="accent-indigo-500 w-5 h-5"
+          className="accent-blue-500 w-5 h-5 rounded focus:ring-2 focus:ring-blue-400 transition"
         />
-        <Label htmlFor="showPassword" className="text-gray-600 cursor-pointer">
+        <Label htmlFor="showPassword" className="text-blue-700 cursor-pointer select-none">
           Mostrar contraseña
         </Label>
       </div>
-      {error && <div className="text-red-500">{error}</div>}
-      <Button type="submit" className="w-full mt-2 bg-indigo-100 text-indigo-700 hover:bg-indigo-200" disabled={loading}>
+      {error && <div className="text-center text-white bg-red-500/90 rounded-lg py-2 px-3 font-semibold shadow mb-2 animate-pulse">{error}</div>}
+      <Button
+        type="submit"
+        className="w-full mt-2 bg-gradient-to-r from-blue-700 via-blue-500 to-orange-400 text-white font-bold py-3 rounded-xl shadow-lg hover:scale-[1.03] hover:shadow-xl transition-all duration-200"
+        disabled={loading}
+      >
         {loading ? "Ingresando..." : "Ingresar"}
       </Button>
     </form>
