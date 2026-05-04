@@ -22,6 +22,7 @@ export default function OrdersPage() {
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
+  const [sortDesc, setSortDesc] = useState(true);
   const { orders, statuses, loading, error, fetchOrders, fetchStatuses } = useOrders();
 
   const availableYears = useMemo(() => {
@@ -58,13 +59,15 @@ export default function OrdersPage() {
   }, [orders, statuses]);
 
   const filteredOrders = useMemo(() => {
-    return orders.filter((order) => {
+    let filtered = orders.filter((order) => {
       const matchesStatus = statusFilter === "all" || String(order.status_id) === statusFilter;
       const year = orderYear(order.created_at);
       const matchesYear = yearFilter === "all" || String(year) === yearFilter;
       return matchesStatus && matchesYear;
     });
-  }, [orders, statusFilter, yearFilter]);
+    filtered = filtered.slice().sort((a, b) => sortDesc ? b.id - a.id : a.id - b.id);
+    return filtered;
+  }, [orders, statusFilter, yearFilter, sortDesc]);
 
   useEffect(() => {
     fetchOrders();
@@ -95,6 +98,8 @@ export default function OrdersPage() {
             onYearFilterChange={(e) => setYearFilter(e.target.value)}
             years={availableYears}
             statuses={statuses}
+            sortDesc={sortDesc}
+            onSortDescChange={setSortDesc}
           />
 
           {loading ? (
