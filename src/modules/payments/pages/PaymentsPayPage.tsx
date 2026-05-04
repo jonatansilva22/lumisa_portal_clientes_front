@@ -75,7 +75,9 @@ export default function PaymentsPayPage() {
       // console.log('RESULTADO DEL PAGO:', result); // Eliminado para producción
       // Solo redirigir a MercadoPago si el método es tarjeta (id === 1)
       if (methodId === 1 && result && result.mp_init_point) {
-        window.location.href = result.mp_init_point;
+        window.open(result.mp_init_point, '_blank', 'noopener');
+        toast.success('Redirigiendo a MercadoPago en una nueva ventana.');
+        navigate('/client');
       } else {
         toast.success('Pago registrado correctamente.');
         navigate('/orders/me');
