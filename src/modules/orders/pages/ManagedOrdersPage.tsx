@@ -45,6 +45,7 @@ export default function ManagedOrdersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
+  const [sortDesc, setSortDesc] = useState(true);
   const [clientImageById, setClientImageById] = useState<Record<number, string>>({});
   const { orders, statuses, loading, error, fetchOrders, fetchStatuses } = useManagedOrders();
 
@@ -75,13 +76,15 @@ export default function ManagedOrdersPage() {
   }, []);
 
   const filteredOrders = useMemo(() => {
-    return orders.filter((order) => {
+    let filtered = orders.filter((order) => {
       const matchesStatus = statusFilter === "all" || String(order.status_id) === statusFilter;
       const year = orderYear(order.created_at);
       const matchesYear = yearFilter === "all" || String(year) === yearFilter;
       return matchesStatus && matchesYear && matchesSearch(order, search);
     });
-  }, [orders, search, statusFilter, yearFilter]);
+    filtered = filtered.slice().sort((a, b) => sortDesc ? b.id - a.id : a.id - b.id);
+    return filtered;
+  }, [orders, search, statusFilter, yearFilter, sortDesc]);
 
   const summary = useMemo(() => {
     const countsByStatusId = orders.reduce<Record<number, number>>((acc, order) => {
@@ -147,6 +150,8 @@ export default function ManagedOrdersPage() {
                 onYearFilterChange={(event) => setYearFilter(event.target.value)}
                 years={availableYears}
                 statuses={statuses}
+                sortDesc={sortDesc}
+                onSortDescChange={setSortDesc}
               />
             </div>
           </div>
@@ -165,6 +170,8 @@ export default function ManagedOrdersPage() {
                   statuses={statuses}
                   detailPath={detailPath}
                   clientImageById={clientImageById}
+                  sortDesc={sortDesc}
+                  onSortDescChange={setSortDesc}
                 />
               )}
             </div>
