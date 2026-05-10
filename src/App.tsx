@@ -18,7 +18,7 @@ function App() {
 
   return (
     <>
-      <Toaster position="bottom-right" toastOptions={{ duration: 3500 }} />
+      <Toaster position="bottom-right" toastOptions={{ duration: 6500 }} />
       <Router>
         <AppRoutes />
       </Router>

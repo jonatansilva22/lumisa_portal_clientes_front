@@ -1,5 +1,4 @@
 import { Card } from "../../../shared/ui/Card";
-import { Button } from "../../../shared/ui/Button";
 import { SearchBar } from "../../../shared/components/SearchBar";
 import type { ProductType, Unit } from "../types/product";
 import React from "react";
@@ -37,25 +36,32 @@ export function ProductsFiltersBar({
 }: ProductsFiltersBarProps) {
   return (
     <div className="w-full flex justify-center">
-      <Card className="mb-4 p-6 flex flex-col items-center max-w-3xl w-full bg-gradient-to-br from-gray-50 to-white border border-gray-200 shadow-md">
-        <div className="flex flex-wrap justify-center items-center gap-4 w-full">
+      <Card className="mb-2 py-3 px-6 flex items-center max-w-5xl w-full bg-gradient-to-br from-gray-50 to-white border-0 shadow-md">
+        <div className="flex flex-row flex-nowrap items-center gap-4 w-full overflow-x-auto">
           <SearchBar
             value={search}
             onChange={onSearchChange}
             placeholder="Buscar producto"
-            className="px-3 py-2 w-44 md:w-64 bg-white rounded-lg shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-blue-200 transition-all"
+            className="px-3 py-2 w-56 md:w-96 bg-white rounded-lg shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-blue-200 transition-all text-xl font-bold"
           />
-                    <button
+          <button
             type="button"
-            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none"
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-base shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none flex items-center gap-2"
             onClick={() => onSortDescChange(!sortDesc)}
             title={sortDesc ? "Orden descendente (más reciente primero)" : "Orden ascendente (más antiguo primero)"}
           >
-            {sortDesc ? "Más recientes primero" : "Más antiguos primero"}
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="inline align-middle">
+              {sortDesc ? (
+                <path d="M19 9l-7 7-7-7" />
+              ) : (
+                <path d="M5 15l7-7 7 7" />
+              )}
+            </svg>
+            <span>{sortDesc ? "Recientes" : "Antiguos"}</span>
           </button>
           {typeof filter !== 'undefined' && typeof onFilterChange !== 'undefined' && (
             <select
-              className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none"
+              className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-base shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none min-w-[110px]"
               value={filter}
               onChange={onFilterChange}
             >
@@ -65,7 +71,7 @@ export function ProductsFiltersBar({
             </select>
           )}
           <select
-            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none"
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-base shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none min-w-[140px]"
             value={typeFilter}
             onChange={onTypeFilterChange}
           >
@@ -75,7 +81,7 @@ export function ProductsFiltersBar({
             ))}
           </select>
           <select
-            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none"
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-base shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none min-w-[140px]"
             value={unitFilter}
             onChange={onUnitFilterChange}
           >
@@ -85,7 +91,6 @@ export function ProductsFiltersBar({
             ))}
           </select>
         </div>
-        {/* Fin de filtros */}
       </Card>
     </div>
   );

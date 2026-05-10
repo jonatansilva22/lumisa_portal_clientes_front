@@ -1,7 +1,7 @@
 import { Modal } from "../../../shared/components/Modal";
 import { ProductForm } from "./ProductForm";
 import type { Product, ProductType, Unit } from "../types/product";
-import { useState } from "react";
+
 
 interface ProductModalProps {
   open: boolean;

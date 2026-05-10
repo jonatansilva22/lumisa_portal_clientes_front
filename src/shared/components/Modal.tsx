@@ -26,7 +26,7 @@ export function Modal({ open, onClose, children, className = "", showHeader = tr
         onClick={e => e.stopPropagation()}
       >
           {showHeader && (
-            <div className="absolute top-0 left-0 w-full h-10 bg-gray-400 rounded-t-xl" style={{ borderTopLeftRadius: '0.75rem', borderTopRightRadius: '0.75rem' }} />
+            <div className="absolute top-0 left-0 w-full h-10 bg-blue-300 rounded-t-xl" style={{ borderTopLeftRadius: '0.75rem', borderTopRightRadius: '0.75rem' }} />
           )}
         <div className={showHeader ? "pt-10" : ""}>
           {children}

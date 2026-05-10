@@ -53,24 +53,19 @@ export default function ProductsPage() {
     setFormError("");
     try {
       const plainObj = formDataToObject(formData);
-      // Manejo de imagen: si hay archivo nuevo, subir a S3 y poner la URL
       if (formData.get("image") instanceof File) {
         const file = formData.get("image") as File;
         if (file && file.size > 0) {
-          // 1. Pedir URL presignada
           const { upload_url, object_url } = await getS3UploadUrl({
             module: "products",
             filename: file.name,
             contentType: file.type,
           });
-          // 2. Subir archivo a S3
           await uploadFileToS3(upload_url, file);
-          // 3. Guardar la URL pública en image_url
           plainObj.image_url = object_url;
         }
       }
-      // Si no hay imagen nueva, mantener la existente o vacía
-      delete plainObj.image; // nunca enviar el archivo al backend
+      delete plainObj.image;
       if (editingProduct) {
         await updateProduct(editingProduct.id, plainObj);
         toast.success("Producto actualizado correctamente");
@@ -81,8 +76,11 @@ export default function ProductsPage() {
       setShowFormModal(false);
       reload();
     } catch (err: any) {
-      setFormError("Error al guardar producto");
-      toast.error("Ha ocurrido un error");
+      let msg = "Error al guardar producto";
+      if (err?.response?.data?.detail) msg = err.response.data.detail;
+      else if (err?.message) msg = err.message;
+      setFormError(msg);
+      toast.error(msg);
     } finally {
       setFormLoading(false);
     }
@@ -118,36 +116,44 @@ export default function ProductsPage() {
         <SidebarAdmin />
         <main className="flex-1 p-4 overflow-y-auto">
           <div className="flex flex-col items-center mb-6">
-            <div className="w-full flex items-center max-w-6xl mx-auto mb-2">
-              <BackButton onClick={() => window.history.back()} className="mr-2" />
-              <h1 className="text-3xl font-bold text-gray-800 text-center flex-1">Gestión de productos</h1>
+            <div className="w-full flex items-center max-w-6xl mx-auto mb-2 justify-between">
+              <div className="flex items-center gap-2 flex-1">
+                <BackButton onClick={() => window.history.back()} className="mr-2" />
+                <h1 className="text-3xl font-bold text-gray-800 text-center w-full">Gestión de productos</h1>
+              </div>
             </div>
           </div>
           <ProductsSummary total={totalProducts} active={totalActive} inactive={totalInactive} />
           <div className="flex flex-row items-center justify-between max-w-6xl mx-auto mb-2 w-full gap-4 flex-wrap">
-            <div className="flex-1 min-w-[300px]">
-              <ProductsFiltersBar
-                search={search}
-                onSearchChange={e => setSearch(e.target.value)}
-                filter={filter}
-                onFilterChange={e => setFilter(e.target.value)}
-                typeFilter={typeFilter}
-                onTypeFilterChange={e => setTypeFilter(e.target.value)}
-                unitFilter={unitFilter}
-                onUnitFilterChange={e => setUnitFilter(e.target.value)}
-                types={types}
-                units={units}
-                isAdmin={isAdmin}
-                onNewProduct={handleOpenCreate}
-                sortDesc={sortDesc}
-                onSortDescChange={setSortDesc}
-              />
+            <div className="flex-1 min-w-[300px] flex items-center gap-4">
+              <div className="flex-1">
+                <ProductsFiltersBar
+                  search={search}
+                  onSearchChange={e => setSearch(e.target.value)}
+                  filter={filter}
+                  onFilterChange={e => setFilter(e.target.value)}
+                  typeFilter={typeFilter}
+                  onTypeFilterChange={e => setTypeFilter(e.target.value)}
+                  unitFilter={unitFilter}
+                  onUnitFilterChange={e => setUnitFilter(e.target.value)}
+                  types={types}
+                  units={units}
+                  isAdmin={isAdmin}
+                  onNewProduct={handleOpenCreate}
+                  sortDesc={sortDesc}
+                  onSortDescChange={setSortDesc}
+                />
+              </div>
+              {isAdmin && (
+                <Button
+                  onClick={handleOpenCreate}
+                  className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:from-indigo-600 hover:to-blue-700 transition-all text-base min-w-[180px]"
+                >
+                  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Nuevo Producto
+                </Button>
+              )}
             </div>
-            {isAdmin && (
-              <Button onClick={handleOpenCreate} className="whitespace-nowrap bg-gray-200 hover:bg-gray-300">
-                + Nuevo Producto
-              </Button>
-            )}
           </div>
           <div className="mt-4 flex justify-center">
             <div className="w-full max-w-7xl">

@@ -91,35 +91,37 @@ export function ProductForm({ initialData = {}, types, units, onSubmit, onCancel
 
 			   <div className="flex gap-2">
 				   <div className="flex-1">
-					   <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
-					<Input
-						id="price"
-						type="number"
-						step="0.01"
-						{...register("price", {
-							required: "Precio requerido",
-							min: { value: 0.01, message: "El precio debe ser mayor a 0" },
-							valueAsNumber: true
-						})}
-						placeholder="Precio"
-						disabled={loading}
-					/>
-					   {errors.price && <span className="text-red-500 text-base font-medium">{String(errors.price.message)}</span>}
+						<label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
+							<Input
+								id="price"
+								type="number"
+								step="0.01"
+								{...register("price", {
+									required: "Precio requerido",
+									min: { value: 0.01, message: "El precio debe ser mayor a 0" },
+									max: { value: 999999.99, message: "El precio es demasiado alto" },
+									valueAsNumber: true
+								})}
+								placeholder="Precio"
+								disabled={loading}
+							/>
+							{errors.price && <span className="text-red-500 text-base font-medium">{String(errors.price.message)}</span>}
 				   </div>
 				   <div className="flex-1">
-					   <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
-					<Input
-						id="quantity"
-						type="number"
-						{...register("quantity", {
-							required: "Cantidad requerida",
-							min: { value: 0, message: "La cantidad no puede ser negativa" },
-							valueAsNumber: true
-						})}
-						placeholder="Cantidad"
-						disabled={loading}
-					/>
-					   {errors.quantity && <span className="text-red-500 text-base font-medium">{String(errors.quantity.message)}</span>}
+						<label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+							<Input
+								id="quantity"
+								type="number"
+								{...register("quantity", {
+									required: "Cantidad requerida",
+									min: { value: 0, message: "La cantidad no puede ser negativa" },
+									max: { value: 999999, message: "La cantidad es demasiado alta" },
+									valueAsNumber: true
+								})}
+								placeholder="Cantidad"
+								disabled={loading}
+							/>
+							{errors.quantity && <span className="text-red-500 text-base font-medium">{String(errors.quantity.message)}</span>}
 				   </div>
 			   </div>
 

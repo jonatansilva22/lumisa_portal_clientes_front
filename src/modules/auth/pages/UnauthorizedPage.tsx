@@ -10,7 +10,7 @@ export function UnauthorizedPage() {
       <p className="text-lg text-gray-700 mb-4">No tienes permiso para acceder a esta página.</p>
       <button
         className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition"
-        onClick={() => navigate("/login")}
+        onClick={() => navigate("/")}
       >
         Volver al login
       </button>

@@ -17,7 +17,7 @@ export function Table<T extends object>({ columns, data, className = "" }: Table
     <div className={`overflow-x-auto rounded-xl shadow bg-white ${className}`}>
       <table className="min-w-full w-full border-separate border-spacing-0">
         <thead>
-          <tr className="bg-gray-200">
+          <tr className="bg-blue-100">
             {columns.map((col, idx) => (
               <th
                 key={idx}
@@ -34,7 +34,7 @@ export function Table<T extends object>({ columns, data, className = "" }: Table
               {columns.map((col, cIdx) => (
                 <td
                   key={cIdx}
-                  className={`px-4 py-2 align-middle border-b border-gray-200 ${col.className || ""}`}
+                  className={`px-4 py-2 align-middle border-b border-gray-300 ${col.className || ""}`}
                 >
                   {typeof col.accessor === "function"
                     ? col.accessor(row)

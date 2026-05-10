@@ -7,6 +7,7 @@ import { ProductsFiltersBar } from "../components/ProductsFiltersBar";
 import type { Product } from "../types/product";
 import { Header, SidebarClient, SidebarAdviser } from "../../../shared/components/Index";
 import { useAuth } from '../../../shared/hooks/useAuth';
+import {LoadingSpinner} from "../../../shared/ui/LoadingSpinner";
 
 
 export default function ProductsCatalogPage() {
@@ -17,6 +18,7 @@ export default function ProductsCatalogPage() {
   const [unitFilter, setUnitFilter] = useState("Todos");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [sortDesc, setSortDesc] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(30);
   const { isAdviser } = useAuth();
 
   // Solo productos activos para clientes y asesores
@@ -30,6 +32,7 @@ export default function ProductsCatalogPage() {
     })
     .slice()
     .sort((a, b) => sortDesc ? b.id - a.id : a.id - b.id);
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
 
   return (
     <div className="h-screen flex flex-col">
@@ -58,13 +61,28 @@ export default function ProductsCatalogPage() {
             />
           </div>
           {loading ? (
-            <div className="text-center py-10">Cargando productos...</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-4">
-              {filteredProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+            <div className="flex flex-col items-center justify-center py-10 gap-2">
+              <LoadingSpinner size={40} />
+              <span className="text-gray-500 mt-2">Cargando productos...</span>
             </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-4">
+                {visibleProducts.map(product => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+              {filteredProducts.length > visibleCount && (
+                <div className="flex justify-center my-6">
+                  <button
+                    onClick={() => setVisibleCount(c => c + 30)}
+                    className="mt-4 px-8 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 font-semibold transition cursor-pointer"
+                  >
+                    Cargar más
+                  </button>
+                </div>
+              )}
+            </>
           )}
           {/* Aquí puedes agregar un modal para detalles si lo deseas */}
         </main>
