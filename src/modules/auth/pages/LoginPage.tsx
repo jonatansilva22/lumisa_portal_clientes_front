@@ -1,3 +1,4 @@
+// Página de login principal del sistema
 import { LoginForm } from "../components/LoginForm";
 import lumisaLogo from "@/assets/lumisa-logo.png";
 
@@ -8,7 +9,9 @@ export default function LoginPage() {
       <div className="z-10 flex flex-col items-center justify-center w-full min-h-screen">
         <div className="bg-white/90 rounded-3xl shadow-2xl px-8 py-10 flex flex-col items-center w-full max-w-md border border-blue-100 backdrop-blur-md">
           <img src={lumisaLogo} alt="Lumisa" className="h-28 mb-4 drop-shadow-lg" />
-          <h1 className="text-2xl font-bold text-blue-900 mb-1 tracking-tight text-center">¡Bienvenido al Portal de Clientes!</h1>
+          <h1 className="text-2xl font-bold text-blue-900 mb-1 tracking-tight text-center">
+            ¡Bienvenido al Portal de Clientes!
+          </h1>
           <p className="text-blue-700 text-sm mb-5 text-center font-medium">Lumisa Comercializadora</p>
           <LoginForm />
         </div>

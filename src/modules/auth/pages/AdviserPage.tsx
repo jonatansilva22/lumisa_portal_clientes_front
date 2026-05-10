@@ -1,22 +1,19 @@
-import react from "react";
+// Página principal para el rol Asesor
 import { LoadingSpinner } from "../../../shared/ui/Index";
-import { SidebarAdviser, Modal, Header } from "../../../shared/components/Index";
+import { SidebarAdviser, Header } from "../../../shared/components/Index";
 
 export function AdviserPage() {
   return (
-    <div>
-      <div className="h-screen flex flex-col">
-        <Header />
-        <div className="flex flex-1 min-h-0">
-          <SidebarAdviser />
-          <h1>Bienvenido Asesor </h1>
-          <p>
-            Esta es una página de ejemplo para mostrar cómo estructurar un
-            componente en React.
-          </p>
+    <div className="h-screen flex flex-col">
+      <Header />
+      <main className="flex flex-1 min-h-0">
+        <SidebarAdviser />
+        <section className="flex flex-col flex-1 items-center justify-center">
+          <h1 className="text-2xl font-bold mb-2">Bienvenido Asesor</h1>
+          <p className="mb-4 text-gray-700">Esta es una página de ejemplo para mostrar cómo estructurar un componente en React.</p>
           <LoadingSpinner />
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }

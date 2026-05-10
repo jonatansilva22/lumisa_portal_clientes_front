@@ -1,22 +1,19 @@
-import react from "react";
+// Página principal para el rol Administrador
 import { LoadingSpinner } from "../../../shared/ui/Index";
-import { SidebarAdmin, Modal, Header } from "../../../shared/components/Index";
+import { SidebarAdmin, Header } from "../../../shared/components/Index";
 
 export function AdminPage() {
   return (
-    <div>
-      <div className="h-screen flex flex-col">
-        <Header />
-        <div className="flex flex-1 min-h-0">
-          <SidebarAdmin />
-          <h1>Bienvenido Administrador </h1>
-          <p>
-            Esta es una página de ejemplo para mostrar cómo estructurar un
-            componente en React.
-          </p>
+    <div className="h-screen flex flex-col">
+      <Header />
+      <main className="flex flex-1 min-h-0">
+        <SidebarAdmin />
+        <section className="flex flex-col flex-1 items-center justify-center">
+          <h1 className="text-2xl font-bold mb-2">Bienvenido Administrador</h1>
+          <p className="mb-4 text-gray-700">Esta es una página de ejemplo para mostrar cómo estructurar un componente en React.</p>
           <LoadingSpinner />
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }
