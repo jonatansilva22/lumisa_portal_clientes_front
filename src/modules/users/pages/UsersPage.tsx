@@ -1,30 +1,35 @@
+//Modulo Usuarios
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "../../../shared/components/Index";
-import { SidebarAdmin } from "../../../shared/components/Index";
+import { SidebarAdmin, SidebarAdviser } from "../../../shared/components/Index";
 import { SearchBar } from "../../../shared/components/Index";
 import { Table } from "../../../shared/ui/Index";
 import { Button } from "../../../shared/ui/Index";
-import { DeleteButton } from "../../../shared/ui/Index";
 import { FilterDropdown } from "../../../shared/ui/Index";
 import { LoadingSpinner } from "../../../shared/ui/Index";
 import { BackButton } from "../../../shared/ui/BackButton";
 import { useUsers } from "../hooks/useUsers";
+import { useAuth } from "../../../shared/hooks/useAuth";
 import { CreateUserModal } from "../components/CreateUserModal";
 import { EditUserModal } from "../components/EditUserModal";
 import { ConfirmModal } from "../components/ConfirmModal";
 import { getCompanies } from "../services/companies";
 import type { User, UserCreate } from "../types/user";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 export function UsersPage() {
   const navigate = useNavigate();
-  const { users, loading, handleToggleActive, handleCreate, handleUpdate } = useUsers();
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role_id === 1;
+  const { users, loading, handleToggleActive, handleCreate, handleUpdate, handleDelete } = useUsers();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("Todos los roles");
   const [statusFilter, setStatusFilter] = useState("Todos los estados");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [togglingUserId, setTogglingUserId] = useState<number | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
   const [companies, setCompanies] = useState<{ id: number; name: string }[]>([]);
 
   useEffect(() => {
@@ -37,12 +42,17 @@ export function UsersPage() {
     return company ? company.name : null;
   };
 
+  // Asesor solo ve clientes
+  const visibleUsers = isAdmin
+    ? users
+    : users.filter((u) => u.role.name === "cliente");
+
   const totalUsuarios = users.length;
   const totalClientes = users.filter((u) => u.role.name === "cliente").length;
   const totalAsesores = users.filter((u) => u.role.name === "asesor").length;
   const totalAdmins = users.filter((u) => u.role.name === "administrador").length;
 
-  const filtered = users.filter((u) => {
+  const filtered = visibleUsers.filter((u) => {
     const matchSearch = `${u.name} ${u.last_name} ${u.email}`
       .toLowerCase()
       .includes(search.toLowerCase());
@@ -65,73 +75,99 @@ export function UsersPage() {
     new Date(date).toLocaleDateString("es-MX");
 
   const togglingUser = users.find((u) => u.id === togglingUserId);
+  const deletingUser = users.find((u) => u.id === deletingUserId);
 
   return (
     <div className="h-screen flex flex-col">
       <Header />
       <div className="flex flex-1 min-h-0">
-        <SidebarAdmin />
+        {isAdmin ? <SidebarAdmin /> : <SidebarAdviser />}
         <main className="flex-1 p-3 sm:p-6 overflow-auto">
 
           {/* Titulo y boton */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
             <div className="flex items-center gap-2">
               <BackButton onClick={() => navigate(-1)} />
-              <h1 className="text-xl sm:text-2xl font-bold">Gestión de Usuarios</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">
+                {isAdmin ? "Gestión de Usuarios" : "Clientes"}
+              </h1>
             </div>
-            <Button onClick={() => setShowCreateModal(true)}>+ Nuevo Usuario</Button>
+            {isAdmin && (
+              <Button onClick={() => setShowCreateModal(true)}>+ Nuevo Usuario</Button>
+            )}
           </div>
 
           {/* Tarjetas de conteo */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-            <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
+          {isAdmin ? (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+              <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
+                <span className="text-xl sm:text-2xl">👥</span>
+                <div>
+                  <p className="text-lg sm:text-xl font-bold">{totalUsuarios}</p>
+                  <p className="text-xs sm:text-sm text-gray-500">Total de Usuarios</p>
+                </div>
+              </div>
+              <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
+                <span className="text-xl sm:text-2xl">👤</span>
+                <div>
+                  <p className="text-lg sm:text-xl font-bold">{totalClientes}</p>
+                  <p className="text-xs sm:text-sm text-gray-500">Clientes</p>
+                </div>
+              </div>
+              <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
+                <span className="text-xl sm:text-2xl">💼</span>
+                <div>
+                  <p className="text-lg sm:text-xl font-bold">{totalAsesores}</p>
+                  <p className="text-xs sm:text-sm text-gray-500">Asesores</p>
+                </div>
+              </div>
+              <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
+                <span className="text-xl sm:text-2xl">⚙️</span>
+                <div>
+                  <p className="text-lg sm:text-xl font-bold">{totalAdmins}</p>
+                  <p className="text-xs sm:text-sm text-gray-500">Administradores</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3 mb-6 w-fit">
               <span className="text-xl sm:text-2xl">👥</span>
               <div>
-                <p className="text-lg sm:text-xl font-bold">{totalUsuarios}</p>
-                <p className="text-xs sm:text-sm text-gray-500">Total de Usuarios</p>
-              </div>
-            </div>
-            <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
-              <span className="text-xl sm:text-2xl">👤</span>
-              <div>
                 <p className="text-lg sm:text-xl font-bold">{totalClientes}</p>
-                <p className="text-xs sm:text-sm text-gray-500">Clientes</p>
+                <p className="text-xs sm:text-sm text-gray-500">Total de Clientes</p>
               </div>
             </div>
-            <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
-              <span className="text-xl sm:text-2xl">💼</span>
-              <div>
-                <p className="text-lg sm:text-xl font-bold">{totalAsesores}</p>
-                <p className="text-xs sm:text-sm text-gray-500">Asesores</p>
-              </div>
-            </div>
-            <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
-              <span className="text-xl sm:text-2xl">⚙️</span>
-              <div>
-                <p className="text-lg sm:text-xl font-bold">{totalAdmins}</p>
-                <p className="text-xs sm:text-sm text-gray-500">Administradores</p>
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Buscador y filtros */}
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <SearchBar
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar usuarios..."
+              placeholder={isAdmin ? "Buscar usuarios..." : "Buscar clientes..."}
               className="flex-1"
             />
-            <FilterDropdown
-              options={["Todos los roles", "Cliente", "Asesor", "Administrador"]}
-              value={roleFilter}
-              onChange={setRoleFilter}
-            />
-            <FilterDropdown
-              options={["Todos los estados", "Activo", "Inactivo"]}
-              value={statusFilter}
-              onChange={setStatusFilter}
-            />
+            {isAdmin && (
+              <>
+                <FilterDropdown
+                  options={["Todos los roles", "Cliente", "Asesor", "Administrador"]}
+                  value={roleFilter}
+                  onChange={setRoleFilter}
+                />
+                <FilterDropdown
+                  options={["Todos los estados", "Activo", "Inactivo"]}
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                />
+              </>
+            )}
+            {!isAdmin && (
+              <FilterDropdown
+                options={["Todos los estados", "Activo", "Inactivo"]}
+                value={statusFilter}
+                onChange={setStatusFilter}
+              />
+            )}
           </div>
 
           {/* Tabla */}
@@ -196,13 +232,31 @@ export function UsersPage() {
                   {
                     header: "Acción",
                     accessor: (u) => (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setEditingUser(u)}
-                          className="border rounded-full px-4 py-1 text-sm hover:bg-gray-100 transition">
-                          Editar
-                        </button>
-                        <DeleteButton onClick={() => setTogglingUserId(u.id)} />
+                      <div className="flex gap-2 itemsItems-center">
+                        {isAdmin && (
+                          <>
+                            <button
+                              onClick={() => setEditingUser(u)}
+                              className="border rounded-full px-4 py-1 text-sm hover:bg-gray-100 transition">
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => setTogglingUserId(u.id)}
+                              title={u.active ? "Desactivar usuario" : "Activar usuario"}
+                              className={`w-10 h-6 rounded-full flex items-center transition-colors duration-300 px-0.5 ${u.active ? "bg-green-500" : "bg-gray-300"}`}>
+                              <span className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300 ${u.active ? "translate-x-4" : "translate-x-0"}`} />
+                            </button>
+                            <button
+                              onClick={() => setDeletingUserId(u.id)}
+                              title="Eliminar usuario"
+                              className="p-1.5 rounded-full border border-red-300 text-red-500 hover:bg-red-50 transition">
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                        {!isAdmin && (
+                          <span className="text-xs text-gray-400 italic">Solo lectura</span>
+                        )}
                       </div>
                     ),
                   },
@@ -236,13 +290,26 @@ export function UsersPage() {
 
       {togglingUserId !== null && (
         <ConfirmModal
-          message={`¿Desea ${togglingUser?.active ? "desactivar" : "activar"} a este usuario?`}
+          message={`¿Desea ${togglingUser?.active ? "desactivar" : "activar"} a ${togglingUser?.name} ${togglingUser?.last_name}?`}
           confirmLabel={togglingUser?.active ? "Desactivar" : "Activar"}
           confirmColor={togglingUser?.active ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}
           onCancel={() => setTogglingUserId(null)}
           onConfirm={async () => {
             await handleToggleActive(togglingUserId);
             setTogglingUserId(null);
+          }}
+        />
+      )}
+
+      {deletingUserId !== null && (
+        <ConfirmModal
+          message={`¿Está seguro que desea eliminar a ${deletingUser?.name} ${deletingUser?.last_name}? Esta acción no se puede deshacer.`}
+          confirmLabel="Eliminar"
+          confirmColor="bg-red-600 hover:bg-red-700"
+          onCancel={() => setDeletingUserId(null)}
+          onConfirm={async () => {
+            await handleDelete(deletingUserId);
+            setDeletingUserId(null);
           }}
         />
       )}

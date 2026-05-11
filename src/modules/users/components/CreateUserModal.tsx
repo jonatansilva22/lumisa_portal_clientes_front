@@ -8,11 +8,15 @@ import { getS3UploadUrl, uploadFileToS3 } from "../services/s3";
 import { Modal } from "../../../shared/components/Modal";
 import { FileUpload } from "../../../shared/ui/FileUpload";
 
-const schema = z.object({
+const createUserSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   last_name: z.string().min(1, "El apellido es requerido"),
   email: z.string().email("Correo inválido"),
-  password: z.string().min(6, "Mínimo 6 caracteres"),
+  password: z
+    .string()
+    .min(8, "Mínimo 8 caracteres")
+    .regex(/[A-Z]/, "Debe tener al menos una mayúscula")
+    .regex(/[!@#$%^&*(),.?\":{}|<>_\-+=/\\]/, "Debe tener al menos un carácter especial"),
   confirm_password: z.string(),
   role_id: z.number({
     required_error: "Selecciona un rol",
@@ -33,7 +37,7 @@ const schema = z.object({
   path: ["company_id"],
 });
 
-type FormData = z.infer<typeof schema>;
+type FormData = z.infer<typeof createUserSchema>;
 
 type Props = {
   onClose: () => void;
@@ -48,7 +52,7 @@ const roles = [
 
 export function CreateUserModal({ onClose, onCreate }: Props) {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(createUserSchema),
   });
 
   const [companies, setCompanies] = useState<{ id: number; name: string }[]>([]);

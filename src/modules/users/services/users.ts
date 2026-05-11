@@ -30,3 +30,10 @@ export async function updateUser(id: number, data: Partial<UserCreate>): Promise
 export async function toggleUserActive(id: number): Promise<void> {
   await api.patch(`/users/${id}/active`, {}, getAuthHeader());
 }
+
+export async function deleteUser(id: number): Promise<void> {
+  await api.delete(`/users/${id}`, getAuthHeader());
+}
+export async function updatePassword(id: number, data: { current_password: string; new_password: string }): Promise<void> {
+  await api.put(`/users/${id}/password`, data, getAuthHeader());
+}

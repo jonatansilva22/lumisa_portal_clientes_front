@@ -14,10 +14,12 @@ import {
   CubeIcon,
   ArrowLeftOnRectangleIcon,
 } from "@heroicons/react/24/outline";
+
 import LumisaLogo from "../../assets/lumisa-logo.png";
 
 export function SidebarAdviser() {
   const [openModal, setOpenModal] = useState(false);
+
   const { logout } = useAuth();
   const navigate = useNavigate();
   const { unreadChatCount } = useNotifications();
@@ -30,19 +32,43 @@ export function SidebarAdviser() {
 
   return (
     <aside className="bg-neutral-800 text-white w-48 flex flex-col py-6 px-2 h-full">
+
       {/* Logo */}
       <div className="mb-8">
         <Logo src={LumisaLogo} className="h-20 w-30" />
       </div>
+
       <nav className="flex flex-col gap-2 w-full">
-        <SidebarItem icon={<HomeIcon className="w-6 h-6" />} label="Inicio" />
-        <SidebarItem icon={<BuildingOffice2Icon className="w-6 h-6" />} label="Empresas" />
-        <SidebarItem icon={<ShoppingBagIcon className="w-6 h-6" />} label="Pedidos" onClick={() => navigate('/manage/orders')} />
-        <SidebarItem icon={<UserGroupIcon className="w-6 h-6" />} label="Clientes" />
+
+        <SidebarItem
+          icon={<HomeIcon className="w-6 h-6" />}
+          label="Inicio"
+        />
+
+        <SidebarItem
+          icon={<BuildingOffice2Icon className="w-6 h-6" />}
+          label="Empresas"
+        />
+
+        <SidebarItem
+          icon={<ShoppingBagIcon className="w-6 h-6" />}
+          label="Pedidos"
+          onClick={() => navigate("/manage/orders")}
+        />
+
+        {/* CLIENTES */}
+        <SidebarItem
+          icon={<UserGroupIcon className="w-6 h-6" />}
+          label="Clientes"
+          onClick={() => navigate("/users")}
+        />
+
+        {/* CHAT */}
         <SidebarItem
           icon={
             <div className="relative">
               <ChatBubbleLeftRightIcon className="w-6 h-6" />
+
               {unreadChatCount > 0 && (
                 <span className="absolute -top-1 -right-2 bg-orange-500 text-white text-[10px] rounded-full px-1 font-bold min-w-[16px] text-center">
                   {unreadChatCount}
@@ -51,11 +77,20 @@ export function SidebarAdviser() {
             </div>
           }
           label="Chat"
-          onClick={() => navigate('/chat')}
+          onClick={() => navigate("/chat")}
         />
-        <SidebarItem icon={<CubeIcon className="w-6 h-6" />} label="Productos" onClick={() => navigate("/catalog")} />
+
+        <SidebarItem
+          icon={<CubeIcon className="w-6 h-6" />}
+          label="Productos"
+          onClick={() => navigate("/catalog")}
+        />
+
       </nav>
+
       <div className="flex-1" />
+
+      {/* Logout */}
       <div className="w-full">
         <SidebarItem
           icon={<ArrowLeftOnRectangleIcon className="w-6 h-6" />}
@@ -63,6 +98,7 @@ export function SidebarAdviser() {
           onClick={() => setOpenModal(true)}
         />
       </div>
+
       <LogoutModal
         open={openModal}
         onClose={() => setOpenModal(false)}

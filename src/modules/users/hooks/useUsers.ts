@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getUsers, createUser, updateUser, toggleUserActive } from "../services/users";
+import { getUsers, createUser, updateUser, toggleUserActive, deleteUser } from "../services/users";
 import type { User, UserCreate } from "../types/user";
 import toast from "react-hot-toast";
 
@@ -25,8 +25,12 @@ export function useUsers() {
       toast.success("Usuario creado exitosamente");
       fetchUsers();
     } catch (error: any) {
-      const msg = error?.response?.data?.detail;
-      toast.error(msg || "Error al crear usuario");
+      const detail = error?.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        toast.error(detail[0]?.msg || "Error de validación");
+      } else {
+        toast.error(detail || "Error al crear usuario");
+      }
     }
   };
 
@@ -50,9 +54,19 @@ export function useUsers() {
     }
   };
 
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteUser(id);
+      toast.success("Usuario eliminado exitosamente");
+      fetchUsers();
+    } catch {
+      toast.error("Error al eliminar usuario");
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  return { users, loading, handleCreate, handleUpdate, handleToggleActive };
+  return { users, loading, handleCreate, handleUpdate, handleToggleActive, handleDelete };
 }
