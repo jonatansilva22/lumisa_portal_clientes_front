@@ -3,10 +3,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "../../../shared/components/Index";
 import { SidebarAdmin, SidebarAdviser } from "../../../shared/components/Index";
-import { SearchBar } from "../../../shared/components/Index";
 import { Table } from "../../../shared/ui/Index";
 import { Button } from "../../../shared/ui/Index";
-import { FilterDropdown } from "../../../shared/ui/Index";
 import { LoadingSpinner } from "../../../shared/ui/Index";
 import { BackButton } from "../../../shared/ui/BackButton";
 import { useUsers } from "../hooks/useUsers";
@@ -14,6 +12,8 @@ import { useAuth } from "../../../shared/hooks/useAuth";
 import { CreateUserModal } from "../components/CreateUserModal";
 import { EditUserModal } from "../components/EditUserModal";
 import { ConfirmModal } from "../components/ConfirmModal";
+import { UsersSummary } from "../components/UsersSummary";
+import { UsersFiltersBar } from "../components/UsersFiltersBar";
 import { getCompanies } from "../services/companies";
 import type { User, UserCreate } from "../types/user";
 import { TrashIcon } from "@heroicons/react/24/outline";
@@ -24,8 +24,8 @@ export function UsersPage() {
   const isAdmin = currentUser?.role_id === 1;
   const { users, loading, handleToggleActive, handleCreate, handleUpdate, handleDelete } = useUsers();
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("Todos los roles");
-  const [statusFilter, setStatusFilter] = useState("Todos los estados");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [togglingUserId, setTogglingUserId] = useState<number | null>(null);
@@ -56,11 +56,10 @@ export function UsersPage() {
     const matchSearch = `${u.name} ${u.last_name} ${u.email}`
       .toLowerCase()
       .includes(search.toLowerCase());
-    const matchRole =
-      roleFilter === "Todos los roles" || u.role.name === roleFilter.toLowerCase();
+    const matchRole = roleFilter === "all" || u.role.name === roleFilter;
     const matchStatus =
-      statusFilter === "Todos los estados" ||
-      (statusFilter === "Activo" ? u.active : !u.active);
+      statusFilter === "all" ||
+      (statusFilter === "active" ? u.active : !u.active);
     return matchSearch && matchRole && matchStatus;
   });
 
@@ -98,77 +97,25 @@ export function UsersPage() {
           </div>
 
           {/* Tarjetas de conteo */}
-          {isAdmin ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-              <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
-                <span className="text-xl sm:text-2xl">👥</span>
-                <div>
-                  <p className="text-lg sm:text-xl font-bold">{totalUsuarios}</p>
-                  <p className="text-xs sm:text-sm text-gray-500">Total de Usuarios</p>
-                </div>
-              </div>
-              <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
-                <span className="text-xl sm:text-2xl">👤</span>
-                <div>
-                  <p className="text-lg sm:text-xl font-bold">{totalClientes}</p>
-                  <p className="text-xs sm:text-sm text-gray-500">Clientes</p>
-                </div>
-              </div>
-              <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
-                <span className="text-xl sm:text-2xl">💼</span>
-                <div>
-                  <p className="text-lg sm:text-xl font-bold">{totalAsesores}</p>
-                  <p className="text-xs sm:text-sm text-gray-500">Asesores</p>
-                </div>
-              </div>
-              <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
-                <span className="text-xl sm:text-2xl">⚙️</span>
-                <div>
-                  <p className="text-lg sm:text-xl font-bold">{totalAdmins}</p>
-                  <p className="text-xs sm:text-sm text-gray-500">Administradores</p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3 mb-6 w-fit">
-              <span className="text-xl sm:text-2xl">👥</span>
-              <div>
-                <p className="text-lg sm:text-xl font-bold">{totalClientes}</p>
-                <p className="text-xs sm:text-sm text-gray-500">Total de Clientes</p>
-              </div>
-            </div>
+          {isAdmin && (
+            <UsersSummary
+              total={totalUsuarios}
+              clients={totalClientes}
+              advisers={totalAsesores}
+              admins={totalAdmins}
+            />
           )}
 
           {/* Buscador y filtros */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <SearchBar
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={isAdmin ? "Buscar usuarios..." : "Buscar clientes..."}
-              className="flex-1"
-            />
-            {isAdmin && (
-              <>
-                <FilterDropdown
-                  options={["Todos los roles", "Cliente", "Asesor", "Administrador"]}
-                  value={roleFilter}
-                  onChange={setRoleFilter}
-                />
-                <FilterDropdown
-                  options={["Todos los estados", "Activo", "Inactivo"]}
-                  value={statusFilter}
-                  onChange={setStatusFilter}
-                />
-              </>
-            )}
-            {!isAdmin && (
-              <FilterDropdown
-                options={["Todos los estados", "Activo", "Inactivo"]}
-                value={statusFilter}
-                onChange={setStatusFilter}
-              />
-            )}
-          </div>
+          <UsersFiltersBar
+            search={search}
+            onSearchChange={(e) => setSearch(e.target.value)}
+            roleFilter={roleFilter}
+            onRoleFilterChange={(e) => setRoleFilter(e.target.value)}
+            statusFilter={statusFilter}
+            onStatusFilterChange={(e) => setStatusFilter(e.target.value)}
+            showRoleFilter={isAdmin}
+          />
 
           {/* Tabla */}
           {loading ? (

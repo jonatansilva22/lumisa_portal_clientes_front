@@ -48,6 +48,7 @@ export function SidebarAdviser() {
         <SidebarItem
           icon={<BuildingOffice2Icon className="w-6 h-6" />}
           label="Empresas"
+          onClick={() => navigate("/companies")}
         />
 
         <SidebarItem
