@@ -82,8 +82,11 @@ function formatDate(value?: string): string {
 }
 
 
+import { useState } from "react";
+
 export function ManagedOrdersTable({ orders, statuses, detailPath, clientImageById = {} }: ManagedOrdersTableProps) {
   const navigate = useNavigate();
+  const [visibleCount, setVisibleCount] = useState(50);
 
   const rows: OrderRow[] = orders.map((order: Order, index: number) => ({
     ...order,
@@ -94,40 +97,53 @@ export function ManagedOrdersTable({ orders, statuses, detailPath, clientImageBy
     statusDisplay: resolveStatusName(order, statuses),
     clientImageUrl: resolveClientImage(order, clientImageById),
   }));
+  const visibleRows = rows.slice(0, visibleCount);
 
   return (
-    <Table
-      columns={[
-        { header: "#", accessor: "rowNumber" },
-        { header: "Folio", accessor: "folio" },
-        { header: "Cliente", accessor: "clientDisplay" },
-        { header: "Empresa", accessor: "companyDisplay" },
-        { header: "Asesor", accessor: "adviserDisplay" },
-        {
-          header: "Estado",
-          accessor: (row: OrderRow) => (
-            <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(row.statusDisplay)}`}>
-              {row.statusDisplay}
-            </span>
-          ),
-        },
-        { header: "Total", accessor: (row: OrderRow) => formatMoney(row.total_payment) },
-        { header: "Fecha de creación", accessor: (row: OrderRow) => formatDate(row.created_at) },
-        {
-          header: <span className="flex justify-center w-full">Acciones</span>,
-          accessor: (row: OrderRow) => (
-            <div className="flex justify-center w-full">
-              <Button
-                onClick={() => navigate(`${detailPath}/${row.id}`)}
-                className="h-12 w-28 px-3 py-1 text-sm hover:bg-gray-200"
-              >
-                Ver detalles
-              </Button>
-            </div>
-          ),
-        },
-      ]}
-      data={rows}
-    />
+    <div className="w-full max-w-7xl mx-auto overflow-x-auto rounded-2xl shadow bg-white border border-gray-200">
+      <Table
+        columns={[
+          { header: <span className="text-base font-bold">#</span>, accessor: "rowNumber" },
+          { header: <span className="text-base font-bold">Folio</span>, accessor: "folio" },
+          { header: <span className="text-base font-bold">Cliente</span>, accessor: "clientDisplay" },
+          { header: <span className="text-base font-bold">Empresa</span>, accessor: "companyDisplay" },
+          { header: <span className="text-base font-bold">Asesor</span>, accessor: "adviserDisplay" },
+          {
+            header: <span className="text-base font-bold">Estado</span>,
+            accessor: (row: OrderRow) => (
+              <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(row.statusDisplay)}`}>
+                {row.statusDisplay}
+              </span>
+            ),
+          },
+          { header: <span className="text-base font-bold">Total</span>, accessor: (row: OrderRow) => formatMoney(row.total_payment) },
+          { header: <span className="text-base font-bold">Fecha de creación</span>, accessor: (row: OrderRow) => formatDate(row.created_at) },
+          {
+            header: <span className="flex justify-center w-full text-base font-bold">Acciones</span>,
+            accessor: (row: OrderRow) => (
+              <div className="flex flex-wrap gap-2 justify-center w-full">
+                <Button
+                  onClick={() => navigate(`${detailPath}/${row.id}`)}
+                  className="min-w-[110px] px-3 py-2 text-sm font-medium bg-blue-50 border border-blue-200 text-blue-700 rounded hover:bg-blue-200 whitespace-nowrap"
+                >
+                  Ver detalles
+                </Button>
+              </div>
+            ),
+          },
+        ]}
+        data={visibleRows}
+      />
+      {orders.length > visibleCount && (
+        <div className="flex justify-center my-4">
+          <Button
+            onClick={() => setVisibleCount((c) => c + 50)}
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 shadow cursor-pointer"
+          >
+            Cargar más
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

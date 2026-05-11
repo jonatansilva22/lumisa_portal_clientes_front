@@ -191,7 +191,12 @@ export default function ManagedOrderDetailPage() {
                 statuses={statuses}
                 saving={saving}
                 onSave={handleSaveStatus}
+                disabled={statusName.toLowerCase().includes('pagad')}
               />
+
+              {statusName.toLowerCase().includes('pagad') && (
+                <div className="text-sm text-gray-500 mt-1">No se puede cambiar el estado de un pedido pagado.</div>
+              )}
 
               {isAdmin && (
                 <OrderAdvisorCard

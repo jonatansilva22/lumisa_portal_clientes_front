@@ -100,6 +100,8 @@ export default function OrdersPage() {
             statuses={statuses}
             sortDesc={sortDesc}
             onSortDescChange={setSortDesc}
+            assignmentFilter="all"
+            onAssignmentFilterChange={() => {}}
           />
 
           {loading ? (

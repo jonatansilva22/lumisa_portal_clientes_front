@@ -7,6 +7,7 @@ interface OrderActionsCardProps {
   isCanceled: boolean;
   actionLoading: boolean;
   canProceedToPay: boolean;
+  canCancelOrder: boolean;
   onCancelOrder: () => void;
   onProceedToPay: () => void;
 }
@@ -15,6 +16,7 @@ export function OrderActionsCard({
   isCanceled,
   actionLoading,
   canProceedToPay,
+  canCancelOrder,
   onCancelOrder,
   onProceedToPay,
 }: OrderActionsCardProps) {
@@ -42,10 +44,16 @@ export function OrderActionsCard({
         <div className="flex flex-col md:flex-row gap-3">
           <Button
             onClick={handleOpenConfirm}
-            disabled={actionLoading || isCanceled}
+            disabled={actionLoading || isCanceled || !canCancelOrder}
             className="mt-0! border border-red-300 text-red-700 bg-red-50 hover:bg-red-100 disabled:opacity-60 disabled:cursor-not-allowed text-base"
           >
-            {isCanceled ? "Pedido cancelado" : actionLoading ? "Cancelando..." : "Cancelar pedido"}
+            {isCanceled
+              ? "Pedido cancelado"
+              : !canCancelOrder
+                ? "No se puede cancelar"
+                : actionLoading
+                  ? "Cancelando..."
+                  : "Cancelar pedido"}
           </Button>
 
           <Button

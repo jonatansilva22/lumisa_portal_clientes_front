@@ -45,6 +45,7 @@ export default function ManagedOrdersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
+  const [assignmentFilter, setAssignmentFilter] = useState("all");
   const [sortDesc, setSortDesc] = useState(true);
   const [clientImageById, setClientImageById] = useState<Record<number, string>>({});
   const { orders, statuses, loading, error, fetchOrders, fetchStatuses } = useManagedOrders();
@@ -80,11 +81,17 @@ export default function ManagedOrdersPage() {
       const matchesStatus = statusFilter === "all" || String(order.status_id) === statusFilter;
       const year = orderYear(order.created_at);
       const matchesYear = yearFilter === "all" || String(year) === yearFilter;
-      return matchesStatus && matchesYear && matchesSearch(order, search);
+      let matchesAssignment = true;
+      if (assignmentFilter === "unassigned") {
+        matchesAssignment = !(order.advisor?.id ?? order.advisor_id);
+      } else if (assignmentFilter === "mine" && user) {
+        matchesAssignment = (order.advisor?.id ?? order.advisor_id) === user.id;
+      }
+      return matchesStatus && matchesYear && matchesAssignment && matchesSearch(order, search);
     });
     filtered = filtered.slice().sort((a, b) => sortDesc ? b.id - a.id : a.id - b.id);
     return filtered;
-  }, [orders, search, statusFilter, yearFilter, sortDesc]);
+  }, [orders, search, statusFilter, yearFilter, assignmentFilter, sortDesc, user]);
 
   const summary = useMemo(() => {
     const countsByStatusId = orders.reduce<Record<number, number>>((acc, order) => {
@@ -152,6 +159,9 @@ export default function ManagedOrdersPage() {
                 statuses={statuses}
                 sortDesc={sortDesc}
                 onSortDescChange={setSortDesc}
+                assignmentFilter={assignmentFilter}
+                onAssignmentFilterChange={(event) => setAssignmentFilter(event.target.value)}
+                userName={user?.name}
               />
             </div>
           </div>

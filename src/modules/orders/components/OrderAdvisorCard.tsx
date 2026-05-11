@@ -34,7 +34,7 @@ export function OrderAdvisorCard({ currentAdvisorId, orderId, saving, onAssign }
   useEffect(() => {
     setLoadingAdvisors(true);
     getUsers()
-      .then((users) => setAdvisors(users.filter((u) => u.role.id === 1 || u.role.id === 2)))
+      .then((users) => setAdvisors(users.filter((u) => (u.role.id === 1 || u.role.id === 2) && u.active)))
       .catch(() => setAdvisors([]))
       .finally(() => setLoadingAdvisors(false));
   }, []);
@@ -44,8 +44,9 @@ export function OrderAdvisorCard({ currentAdvisorId, orderId, saving, onAssign }
   }, [currentAdvisorId]);
 
   const currentAdvisor = advisors.find((a) => a.id === currentAdvisorId);
-  const selectedAdvisor = advisors.find((a) => a.id === selectedId);
-  const hasChanged = selectedId !== "" && selectedId !== currentAdvisorId;
+  const selectedIdNumber = selectedId === "" ? null : Number(selectedId);
+  const selectedAdvisor = advisors.find((a) => a.id === selectedIdNumber);
+  const hasChanged = selectedIdNumber !== null && selectedIdNumber !== currentAdvisorId;
   const currentAssignedLabel = currentAdvisor
     ? `${currentAdvisor.name} ${currentAdvisor.last_name}`
     : currentAdvisorId != null
@@ -53,8 +54,8 @@ export function OrderAdvisorCard({ currentAdvisorId, orderId, saving, onAssign }
       : "Sin asesor asignado";
   const selectedLabel = selectedAdvisor
     ? `${selectedAdvisor.name} ${selectedAdvisor.last_name}`
-    : selectedId !== ""
-      ? `Usuario #${selectedId}`
+    : selectedIdNumber !== null
+      ? `Usuario #${selectedIdNumber}`
       : "Sin seleccionar";
   const adminsCount = advisors.filter((u) => u.role.id === 1).length;
   const advisersCount = advisors.filter((u) => u.role.id === 2).length;
@@ -71,7 +72,7 @@ export function OrderAdvisorCard({ currentAdvisorId, orderId, saving, onAssign }
         <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-indigo-500 font-semibold mb-1">Gestion de responsable</p>
-            <h3 className="text-xl font-bold text-gray-800">Asignacion de usuario staff</h3>
+            <h3 className="text-xl font-bold text-gray-800">Asignacion de asesor al pedido</h3>
             <p className="text-sm text-gray-500 mt-1">Pedido #{orderId}</p>
           </div>
 
@@ -124,7 +125,7 @@ export function OrderAdvisorCard({ currentAdvisorId, orderId, saving, onAssign }
                 <select
                   id="advisor-select"
                   value={selectedId}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setSelectedId(e.target.value === "" ? "" : Number(e.target.value))
                   }
                   className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
@@ -140,7 +141,7 @@ export function OrderAdvisorCard({ currentAdvisorId, orderId, saving, onAssign }
 
               <Button
                 onClick={() => setOpenConfirmModal(true)}
-                disabled={!hasChanged || saving}
+                disabled={!hasChanged || saving || selectedId === ""}
                 className="shrink-0 mt-0! px-5 py-2.5 bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
               >
                 {saving ? "Guardando..." : "Asignar"}
@@ -183,6 +184,7 @@ export function OrderAdvisorCard({ currentAdvisorId, orderId, saving, onAssign }
         </p>
         <div className="flex justify-end gap-3">
           <Button
+            disabled={saving || !hasChanged || selectedId === ""}
             onClick={() => setOpenConfirmModal(false)}
             className="mt-0! border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 shadow-none!"
           >

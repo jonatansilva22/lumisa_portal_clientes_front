@@ -107,9 +107,20 @@ export default function OrderDetailPage() {
     return statusName.toLowerCase().includes("autorizado");
   }, [statusName]);
 
+
   const isCanceled = useMemo(() => {
     return statusName.toLowerCase().includes("cancelado") || order?.status_id === 99;
   }, [order?.status_id, statusName]);
+
+  // Solo puede cancelar si el estado es pendiente, autorizado o rechazado
+  const canCancelOrder = useMemo(() => {
+    const name = statusName.toLowerCase();
+    return (
+      name.includes("pend") ||
+      name.includes("autoriz") ||
+      name.includes("rechaz")
+    );
+  }, [statusName]);
 
   const clientName = useMemo(() => {
     if (!order) return "-";
@@ -229,6 +240,7 @@ export default function OrderDetailPage() {
                 isCanceled={isCanceled}
                 actionLoading={actionLoading}
                 canProceedToPay={canProceedToPay}
+                canCancelOrder={canCancelOrder}
                 onCancelOrder={handleCancelOrder}
                 onProceedToPay={handleProceedToPay}
               />
