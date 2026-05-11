@@ -15,7 +15,7 @@ export default function ProductDetailPage() {
   const { products, types, units } = useProducts();
   const product = products.find(p => String(p.id) === String(id));
   const [quantity, setQuantity] = useState(1);
-  const { addToCart, loading, error } = useCart();
+  const { addToCart, cart, loading, error } = useCart();
   const { isAdmin, isAdviser } = useAuth();
 
   // Mostrar spinner si los datos aún no están listos
@@ -55,6 +55,14 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = async () => {
     if (!product) return;
+    // Buscar si el producto ya está en el carrito
+    const cartItem = cart?.cart_details?.find((item: any) => item.product_id === product.id);
+    const currentQty = cartItem ? cartItem.quantity : 0;
+    const newQty = currentQty + quantity;
+    if (newQty > product.quantity) {
+      toast.error('No puedes agregar más de la cantidad disponible en stock.');
+      return;
+    }
     try {
       await addToCart({ product_id: product.id, quantity });
       toast.success('¡Producto agregado al carrito!');
