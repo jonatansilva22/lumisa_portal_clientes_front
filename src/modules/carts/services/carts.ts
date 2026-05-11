@@ -52,7 +52,7 @@ export async function removeProductFromCart(productId: number): Promise<Cart> {
 // Vaciar el carrito
 export async function clearCart(): Promise<Cart> {
   const { data } = await api.delete<Cart>('/carts/me/clear', {
-    headers: authHeader(),
+    headers: authHeader()
   });
   return data;
 }

@@ -25,6 +25,11 @@ export function CartSummary({ subtotal, totalItems, onCheckout, loading, classNa
       >
         Solicitar Pedido
       </button>
+      {totalItems === 0 && (
+        <div className="text-orange-500 text-sm font-semibold mt-2 text-center">
+          No se puede solicitar pedido si el carrito está vacío.
+        </div>
+      )}
     </Card>
   );
 }

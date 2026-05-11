@@ -36,17 +36,17 @@ export function ProductsFiltersBar({
 }: ProductsFiltersBarProps) {
   return (
     <div className="w-full flex justify-center">
-      <Card className="mb-2 py-3 px-6 flex items-center max-w-5xl w-full bg-gradient-to-br from-gray-50 to-white border-0 shadow-md">
-        <div className="flex flex-row flex-nowrap items-center gap-4 w-full overflow-x-auto">
+      <Card className="mb-2 py-3 px-4 sm:px-6 flex items-center max-w-5xl w-full bg-gradient-to-br from-gray-50 to-white border-0 shadow-md">
+        <div className="flex flex-col md:flex-row md:flex-nowrap items-center gap-2 md:gap-4 w-full">
           <SearchBar
             value={search}
             onChange={onSearchChange}
             placeholder="Buscar producto"
-            className="px-3 py-2 w-56 md:w-96 bg-white rounded-lg shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-blue-200 transition-all text-xl font-bold"
+            className="px-3 py-2 w-full md:w-96 bg-white rounded-lg shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-blue-200 transition-all text-xl font-bold"
           />
           <button
             type="button"
-            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-base shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none flex items-center gap-2"
+            className="w-full md:w-auto bg-white border border-gray-200 rounded-lg px-3 py-2 text-base shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none flex items-center gap-2 justify-center"
             onClick={() => onSortDescChange(!sortDesc)}
             title={sortDesc ? "Orden descendente (más reciente primero)" : "Orden ascendente (más antiguo primero)"}
           >
@@ -61,7 +61,7 @@ export function ProductsFiltersBar({
           </button>
           {typeof filter !== 'undefined' && typeof onFilterChange !== 'undefined' && (
             <select
-              className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-base shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none min-w-[110px]"
+              className="w-full md:w-auto bg-white border border-gray-200 rounded-lg px-3 py-2 text-base shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none min-w-[110px]"
               value={filter}
               onChange={onFilterChange}
             >
@@ -71,7 +71,7 @@ export function ProductsFiltersBar({
             </select>
           )}
           <select
-            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-base shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none min-w-[140px]"
+            className="w-full md:w-auto bg-white border border-gray-200 rounded-lg px-3 py-2 text-base shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none min-w-[140px]"
             value={typeFilter}
             onChange={onTypeFilterChange}
           >
@@ -81,7 +81,7 @@ export function ProductsFiltersBar({
             ))}
           </select>
           <select
-            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-base shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none min-w-[140px]"
+            className="w-full md:w-auto bg-white border border-gray-200 rounded-lg px-3 py-2 text-base shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all outline-none min-w-[140px]"
             value={unitFilter}
             onChange={onUnitFilterChange}
           >

@@ -6,13 +6,15 @@ import { Header, SidebarClient, SidebarAdviser } from "../../../shared/component
 import { useAuth } from '../../../shared/hooks/useAuth';
 import { BackButton } from "../../../shared/ui/BackButton";
 import { LoadingSpinner } from "../../../shared/ui/LoadingSpinner";
+
 import { useProducts } from "../../products/hooks/useProducts";
 import { createOrderFromCart } from "../../orders/services/orders";
 import toast from "react-hot-toast";
+import { TrashIcon } from "@heroicons/react/24/solid";
 
 export default function CartPage() {
-    const { isAdviser } = useAuth();
-  const { cart, loading, error, fetchCart, updateInCart, removeFromCart } = useCart();
+  const { isAdviser } = useAuth();
+  const { cart, loading, error, fetchCart, updateInCart, removeFromCart, clear } = useCart();
   const { products } = useProducts();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
@@ -45,7 +47,6 @@ export default function CartPage() {
   };
 
   return (
-
     <div className="h-screen flex flex-col">
       <Header />
       <div className="flex flex-1 min-h-0">
@@ -65,12 +66,34 @@ export default function CartPage() {
                 <div className="flex-1 bg-white rounded-lg shadow p-2 md:p-4 border border-gray-100 w-full max-w-full">
                   {cart?.cart_details.length ? (
                     <>
+                      <div className="flex justify-end mb-2">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (loading || totalItems === 0) return;
+                            await clear();
+                            toast.success("Carrito limpiado");
+                          }}
+                          aria-label="Limpiar carrito"
+                          className={`flex items-center gap-2 border cursor-pointer border-gray-300 bg-white text-gray-500 hover:bg-red-100 hover:text-red-700 px-3 py-1 text-sm font-medium rounded-full transition${(loading || totalItems === 0 ? ' opacity-60 cursor-not-allowed' : '')}`}
+                          disabled={loading || totalItems === 0}
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                          <span>Limpiar carrito</span>
+                        </button>
+                      </div>
                       {cart.cart_details.map(item => (
                         <CartProductItem
                           key={item.id}
                           item={item}
-                          onQuantityChange={(productId, quantity) => updateInCart(productId, { quantity })}
-                          onRemove={removeFromCart}
+                          onQuantityChange={async (productId, quantity) => {
+                            await updateInCart(productId, { quantity });
+                            toast.success("Cantidad actualizada");
+                          }}
+                          onRemove={async (productId) => {
+                            await removeFromCart(productId);
+                            toast.success("Producto eliminado del carrito");
+                          }}
                           className="w-full"
                         />
                       ))}
@@ -82,15 +105,16 @@ export default function CartPage() {
                     <div className="text-gray-500 text-center py-12">Tu carrito está vacío</div>
                   )}
                 </div>
-                <CartSummary
-                  subtotal={subtotal}
-                  totalItems={totalItems}
-                  onCheckout={handleCheckout}
-                  loading={loading || checkoutLoading}
-                  className="self-start w-full md:w-auto mt-4 md:mt-0"
-                  disabled={!!hasInactive}
-                  inactiveMessage={hasInactive ? "No puedes solicitar el pedido porque hay productos no disponibles." : undefined}
-                />
+                <div className="flex flex-col gap-2 self-start w-full md:w-auto mt-4 md:mt-0">
+                  <CartSummary
+                    subtotal={subtotal}
+                    totalItems={totalItems}
+                    onCheckout={handleCheckout}
+                    loading={loading || checkoutLoading}
+                    disabled={!!hasInactive}
+                    inactiveMessage={hasInactive ? "No puedes solicitar el pedido porque hay productos no disponibles." : undefined}
+                  />
+                </div>
               </div>
             )}
           </div>

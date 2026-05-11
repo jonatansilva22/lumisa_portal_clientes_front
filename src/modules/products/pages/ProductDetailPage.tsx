@@ -7,6 +7,7 @@ import { BackButton } from "../../../shared/ui/BackButton";
 import { useState } from "react";
 import { useCart } from '../../carts/hooks/useCart';
 import toast from 'react-hot-toast';
+import { LoadingSpinner } from '../../../shared/ui/LoadingSpinner';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -16,7 +17,21 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const { addToCart, loading, error } = useCart();
   const { isAdmin, isAdviser } = useAuth();
-  // Eliminamos success, usaremos toast
+
+  // Mostrar spinner si los datos aún no están listos
+  if (!products.length || !types.length || !units.length) {
+    return (
+      <div className="h-screen flex flex-col">
+        <Header />
+        <div className="flex flex-1 min-h-0">
+          {isAdviser ? <SidebarAdviser /> : <SidebarClient />}
+          <main className="flex-1 p-8 flex items-center justify-center">
+            <LoadingSpinner size={48} />
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   // Si el producto no existe o está inactivo y el usuario no es admin, no mostrar detalles
   if (!product || (!isAdmin && !product.active)) {
