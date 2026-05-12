@@ -20,7 +20,6 @@ export function Header() {
 
   useEffect(() => {
     if (user) fetchCart();
-    // eslint-disable-next-line
   }, [user]);
 
   useEffect(() => {
@@ -43,13 +42,24 @@ export function Header() {
 
   const handleNotificationClick = async (id: number, type: string, order_id?: number | null) => {
     await markAsRead(id);
-    if (type === "chat") navigate(`/chat`);
+    
+    if (type === "chat") {
+      
+      if (order_id) {
+        
+        navigate(`/chat`, { state: { orderId: order_id, tab: 'orders' } });
+      } else {
+      
+        navigate(`/chat`, { state: { tab: 'direct' } });
+      }
+    }
     else if (["order_new", "order_status", "order_advisor"].includes(type) && order_id) {
       if (isAdmin || isAdviser) navigate(`/manage/orders/${order_id}`);
       else navigate(`/orders/${order_id}`);
     }
     else if (["product_price", "product_stock", "cart_stock"].includes(type)) navigate(`/cart`);
     else if (type === "payment" && order_id) navigate(`/orders/${order_id}`);
+    
     setShowDropdown(false);
   };
 

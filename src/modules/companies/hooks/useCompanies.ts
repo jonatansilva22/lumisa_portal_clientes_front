@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getCompanies, createCompany, updateCompany, toggleCompanyActive } from "../services/companies";
+import { getCompanies, createCompany, updateCompany, toggleCompanyActive, deleteCompany } from "../services/companies";
 import type { Company, CompanyCreate } from "../types/company";
 import toast from "react-hot-toast";
 
@@ -50,9 +50,20 @@ export function useCompanies() {
     }
   };
 
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteCompany(id);
+      toast.success("Empresa eliminada exitosamente");
+      fetchCompanies();
+    } catch (error: any) {
+      const msg = error?.response?.data?.detail;
+      toast.error(msg || "Error al eliminar empresa");
+    }
+  };
+
   useEffect(() => {
     fetchCompanies();
   }, []);
 
-  return { companies, loading, handleCreate, handleUpdate, handleToggleActive };
+  return { companies, loading, handleCreate, handleUpdate, handleToggleActive, handleDelete };
 }

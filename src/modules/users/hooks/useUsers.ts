@@ -59,8 +59,9 @@ export function useUsers() {
       await deleteUser(id);
       toast.success("Usuario eliminado exitosamente");
       fetchUsers();
-    } catch {
-      toast.error("Error al eliminar usuario");
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.detail || "Error al eliminar usuario";
+      toast.error(errorMessage);
     }
   };
 

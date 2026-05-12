@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../../shared/hooks/useAuth";
 import { useAuthStore } from "../../auth/store/auth";
 import { Header } from "../../../shared/components/Index";
 import { SidebarAdmin } from "../../../shared/components/Index";
+import { SidebarAdviser } from "../../../shared/components/Index";
+import { SidebarClient } from "../../../shared/components/Index";
 import { BackButton } from "../../../shared/ui/BackButton";
 import { useChat } from "../hooks/useChat";
 import type { Chat } from "../types/chat";
 import type { Order } from "../../orders/types/order";
+import { getAllActiveUsers, getDirectMessages, sendDirectMessage, getMyDirectConversations, type User } from "../services/chats";
 
 const getToken = () => useAuthStore.getState().token;
 
@@ -57,41 +60,161 @@ function getStatusColor(name: string) {
   return STATUS_COLORS[name?.toLowerCase()] ?? "bg-gray-100 text-gray-500";
 }
 
+const ROLE_BADGES: Record<number, { label: string; color: string }> = {
+  1: { label: "Admin", color: "bg-blue-100 text-blue-700" },
+  2: { label: "Asesor", color: "bg-green-100 text-green-700" },
+  3: { label: "Cliente", color: "bg-yellow-100 text-yellow-700" },
+};
+
 export function ChatPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const isAdmin = user?.role_id === 1 || user?.role_id === 2;
+  const location = useLocation();
+  const isAdmin = user?.role_id === 1;
+  
+  // Estado para pestañas
+  const [activeTab, setActiveTab] = useState<'orders' | 'direct'>('orders');
+  
+  // Estado para pedidos
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<number | null>(null);
+  
+  // Estado para usuarios (mensajes directos)
+  const [users, setUsers] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<number | null>(null);
+  
+  // Estado para mensajes directos
+  const [directMessages, setDirectMessages] = useState<Chat[]>([]);
+  const [loadingDirectMessages, setLoadingDirectMessages] = useState(false);
+  const [sendingDirectMessage, setSendingDirectMessage] = useState(false);
+  
   const [searchConv, setSearchConv] = useState("");
   const { messages, loading, sending, handleSend } = useChat(selectedOrder ?? 0);
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Cargar pedidos
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const data = isAdmin ? await getAllOrdersLocal() : await getMyOrdersLocal();
-        setOrders(Array.isArray(data) ? data : []);
-        if (window.innerWidth >= 768 && data.length > 0) {
-          setSelectedOrder(data[0].id);
+    if (activeTab === 'orders') {
+      const fetchOrders = async () => {
+        try {
+          const data = isAdmin || user?.role_id === 2
+            ? await getAllOrdersLocal()
+            : await getMyOrdersLocal();
+          
+          const dataArray = Array.isArray(data) ? data : [];
+          
+          const filtered = user?.role_id === 2
+            ? dataArray.filter((o) => (o as any).advisor?.id === user.id)
+            : dataArray;
+          
+          setOrders(dataArray);
+          
+          if (window.innerWidth >= 768 && filtered.length > 0) {
+            setSelectedOrder(filtered[0].id);
+          }
+        } catch {
+          setOrders([]);
+        } finally {
+          setLoadingOrders(false);
         }
-      } catch {
-        setOrders([]);
-      } finally {
-        setLoadingOrders(false);
-      }
-    };
-    fetchOrders();
-  }, [isAdmin]);
+      };
+      fetchOrders();
+    }
+  }, [isAdmin, activeTab, user?.role_id, user?.id]);
+
+  // Cargar usuarios (admin: todos, no-admin: solo conversaciones activas)
+  useEffect(() => {
+    if (activeTab === 'direct') {
+      const fetchUsers = async () => {
+        setLoadingUsers(true);
+        try {
+          let data: User[];
+          
+          if (isAdmin) {
+            // Admin: cargar todos los usuarios activos
+            data = await getAllActiveUsers();
+            // Excluir al usuario actual
+            const filteredUsers = data.filter(u => u.id !== user?.id);
+            setUsers(filteredUsers);
+            
+            if (window.innerWidth >= 768 && filteredUsers.length > 0) {
+              setSelectedUser(filteredUsers[0].id);
+            }
+          } else {
+            // No-admin: cargar solo conversaciones activas
+            data = await getMyDirectConversations();
+            setUsers(data);
+            
+            if (window.innerWidth >= 768 && data.length > 0) {
+              setSelectedUser(data[0].id);
+            }
+          }
+        } catch {
+          setUsers([]);
+        } finally {
+          setLoadingUsers(false);
+        }
+      };
+      fetchUsers();
+    }
+  }, [activeTab, isAdmin, user?.id]);
+
+  // Cargar mensajes directos cuando se selecciona un usuario
+  useEffect(() => {
+    if (selectedUser && activeTab === 'direct') {
+      let isInitialLoad = true;
+      
+      const fetchDirectMessages = async () => {
+        if (isInitialLoad) {
+          setLoadingDirectMessages(true);
+        }
+        
+        try {
+          const data = await getDirectMessages(selectedUser);
+          setDirectMessages(data);
+        } catch {
+          setDirectMessages([]);
+        } finally {
+          if (isInitialLoad) {
+            setLoadingDirectMessages(false);
+            isInitialLoad = false;
+          }
+        }
+      };
+      
+      fetchDirectMessages();
+      
+      const interval = setInterval(fetchDirectMessages, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedUser, activeTab]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, directMessages]);
+
+  // Leer state de navegación (notificaciones)
+  useEffect(() => {
+    const state = location.state as { orderId?: number; tab?: 'orders' | 'direct' } | null;
+    
+    if (state?.tab) {
+      setActiveTab(state.tab);
+    }
+    
+    if (state?.orderId && state.tab === 'orders') {
+      setSelectedOrder(state.orderId);
+    }
+    
+    window.history.replaceState({}, document.title);
+  }, [location]);
 
   const selectedOrderData = orders.find((o) => o.id === selectedOrder);
+  const selectedUserData = users.find((u) => u.id === selectedUser);
 
+  // Enviar mensaje de pedido
   const onSend = async () => {
     if (!message.trim() || selectedOrder === null) return;
 
@@ -108,22 +231,65 @@ export function ChatPage() {
     setMessage("");
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); }
+  // Enviar mensaje directo
+  const onSendDirect = async () => {
+    if (!message.trim() || selectedUser === null) return;
+
+    setSendingDirectMessage(true);
+    try {
+      await sendDirectMessage(selectedUser, message.trim());
+      setMessage("");
+      const data = await getDirectMessages(selectedUser);
+      setDirectMessages(data);
+    } catch (error) {
+      toast.error("Error al enviar mensaje");
+    } finally {
+      setSendingDirectMessage(false);
+    }
   };
 
-  const filteredOrders = orders.filter((o) =>
-    `Pedido #${o.id} ${o.folio}`.toLowerCase().includes(searchConv.toLowerCase())
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (activeTab === 'orders') {
+        onSend();
+      } else {
+        onSendDirect();
+      }
+    }
+  };
+
+  const filteredOrders = orders
+    .filter((o) => {
+      if (user?.role_id === 2) {
+        return (o as any).advisor?.id === user.id;
+      }
+      return true;
+    })
+    .filter((o) =>
+      `Pedido #${o.id} ${o.folio}`.toLowerCase().includes(searchConv.toLowerCase())
+    );
+
+  const filteredUsers = users.filter((u) =>
+    `${u.name} ${u.last_name}`.toLowerCase().includes(searchConv.toLowerCase())
   );
 
-  const showList = selectedOrder === null;
+  const showList = (activeTab === 'orders' && selectedOrder === null) || 
+                   (activeTab === 'direct' && selectedUser === null);
+
+  const currentMessages = activeTab === 'orders' ? messages : directMessages;
+  const currentLoading = activeTab === 'orders' ? loading : loadingDirectMessages;
+  const currentSending = activeTab === 'orders' ? sending : sendingDirectMessage;
 
   return (
     <div className="h-screen flex flex-col">
       <Header />
       <div className="flex flex-1 min-h-0">
+        {/* Sidebar según rol */}
         <div className="hidden md:block">
-          <SidebarAdmin />
+          {user?.role_id === 1 && <SidebarAdmin />}
+          {user?.role_id === 2 && <SidebarAdviser />}
+          {user?.role_id === 3 && <SidebarClient />}
         </div>
         <main className="flex-1 flex overflow-hidden">
 
@@ -134,11 +300,44 @@ export function ChatPage() {
                 <BackButton onClick={() => navigate(-1)} />
                 <h2 className="font-bold text-gray-800 text-lg">Mensajes</h2>
               </div>
+
+              {/* Pestañas */}
+              <div className="flex gap-1 mb-3 bg-gray-100 p-1 rounded-lg">
+                <button
+                  onClick={() => {
+                    setActiveTab('orders');
+                    setSelectedOrder(null);
+                    setSelectedUser(null);
+                  }}
+                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition ${
+                    activeTab === 'orders'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Pedidos
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('direct');
+                    setSelectedOrder(null);
+                    setSelectedUser(null);
+                  }}
+                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition ${
+                    activeTab === 'direct'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Mensajes
+                </button>
+              </div>
+
               <div className="relative">
                 <input
                   value={searchConv}
                   onChange={(e) => setSearchConv(e.target.value)}
-                  placeholder="Buscar pedido..."
+                  placeholder={activeTab === 'orders' ? "Buscar pedido..." : "Buscar usuario..."}
                   className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 pl-9"
                 />
                 <svg className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -148,46 +347,89 @@ export function ChatPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
-              {loadingOrders ? (
-                <div className="flex justify-center mt-8">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                  </div>
-                </div>
-              ) : filteredOrders.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center mt-8">Sin pedidos</p>
+              {activeTab === 'orders' ? (
+                <>
+                  {loadingOrders ? (
+                    <div className="flex justify-center mt-8">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </div>
+                    </div>
+                  ) : filteredOrders.length === 0 ? (
+                    <p className="text-xs text-gray-400 text-center mt-8">Sin pedidos</p>
+                  ) : (
+                    filteredOrders.map((order) => {
+                      const statusName = (order as any).status?.name ?? "";
+                      return (
+                        <button
+                          key={order.id}
+                          onClick={() => setSelectedOrder(order.id)}
+                          className={`w-full flex items-center gap-3 px-4 py-3.5 hover:bg-blue-50 transition-colors text-left ${
+                            selectedOrder === order.id ? "bg-blue-50 border-l-4 border-blue-600" : "border-l-4 border-transparent"
+                          }`}
+                        >
+                          <div className="w-11 h-11 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm">
+                            P
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-center">
+                              <p className="font-semibold text-gray-800 text-sm truncate">Pedido #{order.id}</p>
+                              <span className="text-[10px] text-gray-400 flex-shrink-0">{order.folio}</span>
+                            </div>
+                            <div className="mt-0.5">
+                              {statusName && (
+                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${getStatusColor(statusName)}`}>
+                                  {statusName}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </>
               ) : (
-                filteredOrders.map((order) => {
-                  const statusName = (order as any).status?.name ?? "";
-                  return (
-                    <button
-                      key={order.id}
-                      onClick={() => setSelectedOrder(order.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3.5 hover:bg-blue-50 transition-colors text-left ${
-                        selectedOrder === order.id ? "bg-blue-50 border-l-4 border-blue-600" : "border-l-4 border-transparent"
-                      }`}
-                    >
-                      <div className="w-11 h-11 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm">
-                        P
+                <>
+                  {loadingUsers ? (
+                    <div className="flex justify-center mt-8">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-center">
-                          <p className="font-semibold text-gray-800 text-sm truncate">Pedido #{order.id}</p>
-                          <span className="text-[10px] text-gray-400 flex-shrink-0">{order.folio}</span>
-                        </div>
-                        <div className="mt-0.5">
-                          {statusName && (
-                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${getStatusColor(statusName)}`}>
-                              {statusName}
+                    </div>
+                  ) : filteredUsers.length === 0 ? (
+                    <p className="text-xs text-gray-400 text-center mt-8">Sin usuarios</p>
+                  ) : (
+                    filteredUsers.map((usr) => {
+                      const roleBadge = ROLE_BADGES[usr.role_id] || { label: "Usuario", color: "bg-gray-100 text-gray-700" };
+                      return (
+                        <button
+                          key={usr.id}
+                          onClick={() => setSelectedUser(usr.id)}
+                          className={`w-full flex items-center gap-3 px-4 py-3.5 hover:bg-blue-50 transition-colors text-left ${
+                            selectedUser === usr.id ? "bg-blue-50 border-l-4 border-blue-600" : "border-l-4 border-transparent"
+                          }`}
+                        >
+                          <div className="w-11 h-11 rounded-full bg-gray-600 flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm">
+                            {usr.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-800 text-sm truncate">
+                              {usr.name} {usr.last_name}
+                            </p>
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${roleBadge.color}`}>
+                              {roleBadge.label}
                             </span>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -197,37 +439,49 @@ export function ChatPage() {
             <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setSelectedOrder(null)}
+                  onClick={() => {
+                    if (activeTab === 'orders') setSelectedOrder(null);
+                    else setSelectedUser(null);
+                  }}
                   className="md:hidden w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500 transition"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
-                <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">P</div>
+                <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                  {activeTab === 'orders' ? 'P' : (selectedUserData?.name.charAt(0).toUpperCase() || 'U')}
+                </div>
                 <div>
                   <p className="font-semibold text-gray-800 text-sm">
-                    {selectedOrderData ? `Pedido #${selectedOrderData.id} — ${selectedOrderData.folio}` : "Selecciona un pedido"}
+                    {activeTab === 'orders' 
+                      ? (selectedOrderData ? `Pedido #${selectedOrderData.id} — ${selectedOrderData.folio}` : "Selecciona un pedido")
+                      : (selectedUserData ? `${selectedUserData.name} ${selectedUserData.last_name}` : "Selecciona un usuario")
+                    }
                   </p>
-                  <p className="text-xs text-gray-400">
-                    {(selectedOrderData as any)?.status?.name ?? ""}
-                  </p>
+                  {activeTab === 'orders' && (
+                    <p className="text-xs text-gray-400">
+                      {(selectedOrderData as any)?.status?.name ?? ""}
+                    </p>
+                  )}
+                  {activeTab === 'direct' && selectedUserData && (
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGES[selectedUserData.role_id]?.color}`}>
+                      {ROLE_BADGES[selectedUserData.role_id]?.label}
+                    </span>
+                  )}
                 </div>
               </div>
-              <button className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500 transition">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
-                </svg>
-              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-1">
-              {!selectedOrder ? (
+              {(activeTab === 'orders' && !selectedOrder) || (activeTab === 'direct' && !selectedUser) ? (
                 <div className="flex flex-col justify-center items-center h-full gap-2">
                   <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-3xl">💬</div>
-                  <p className="text-gray-500 text-sm font-medium">Selecciona un pedido</p>
+                  <p className="text-gray-500 text-sm font-medium">
+                    {activeTab === 'orders' ? 'Selecciona un pedido' : 'Selecciona un usuario'}
+                  </p>
                 </div>
-              ) : loading ? (
+              ) : currentLoading ? (
                 <div className="flex justify-center items-center h-full">
                   <div className="flex gap-1">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
@@ -235,16 +489,16 @@ export function ChatPage() {
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
                 </div>
-              ) : messages.length === 0 ? (
+              ) : currentMessages.length === 0 ? (
                 <div className="flex flex-col justify-center items-center h-full gap-2">
                   <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-3xl">💬</div>
                   <p className="text-gray-500 text-sm font-medium">No hay mensajes aún</p>
                   <p className="text-gray-400 text-xs">Sé el primero en escribir</p>
                 </div>
               ) : (
-                messages.map((msg: Chat, i: number) => {
+                currentMessages.map((msg: Chat, i: number) => {
                   const isMe = msg.sender_id === user?.id;
-                  const showDate = i === 0 || !isSameDay(msg.sent_at, messages[i - 1].sent_at);
+                  const showDate = i === 0 || !isSameDay(msg.sent_at, currentMessages[i - 1].sent_at);
                   return (
                     <div key={msg.id}>
                       {showDate && (
@@ -279,25 +533,41 @@ export function ChatPage() {
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center gap-2">
-              <input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Escribe un mensaje..."
-                disabled={!selectedOrder}
-                className="flex-1 bg-gray-100 border border-transparent rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-blue-300 transition-colors disabled:opacity-50"
-              />
-              <button
-                onClick={onSend}
-                disabled={sending || !message.trim() || !selectedOrder}
-                className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 ml-0.5">
-                  <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-                </svg>
-              </button>
-            </div>
+            {((!isAdmin && activeTab === 'orders') || activeTab === 'direct') && (
+              <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center gap-2">
+                <input
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Escribe un mensaje..."
+                  disabled={activeTab === 'orders' ? !selectedOrder : !selectedUser}
+                  className="flex-1 bg-gray-100 border border-transparent rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-blue-300 transition-colors disabled:opacity-50"
+                />
+                <button
+                  onClick={activeTab === 'orders' ? onSend : onSendDirect}
+                  disabled={currentSending || !message.trim() || (activeTab === 'orders' ? !selectedOrder : !selectedUser)}
+                  className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 ml-0.5">
+                    <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            {isAdmin && activeTab === 'orders' && (
+              <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 text-center">
+                <p className="text-sm text-gray-500">
+                  <span className="inline-flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Modo solo lectura
+                  </span>
+                </p>
+              </div>
+            )}
           </div>
         </main>
       </div>

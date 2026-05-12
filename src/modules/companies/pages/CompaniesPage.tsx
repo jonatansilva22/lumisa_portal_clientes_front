@@ -1,30 +1,34 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "../../../shared/components/Index";
-import { SidebarAdmin } from "../../../shared/components/Index";
-import { SearchBar } from "../../../shared/components/Index";
+import { SidebarAdmin, SidebarAdviser } from "../../../shared/components/Index";
 import { Table } from "../../../shared/ui/Index";
 import { Button } from "../../../shared/ui/Index";
-import { DeleteButton } from "../../../shared/ui/Index";
-import { FilterDropdown } from "../../../shared/ui/Index";
 import { LoadingSpinner } from "../../../shared/ui/Index";
 import { BackButton } from "../../../shared/ui/BackButton";
+import { useAuth } from "../../../shared/hooks/useAuth";
 import { useCompanies } from "../hooks/useCompanies";
 import { CreateCompanyModal } from "../components/CreateCompanyModal";
 import { EditCompanyModal } from "../components/EditCompanyModal";
 import { ViewCompanyModal } from "../components/ViewCompanyModal";
 import { ConfirmModal } from "../components/ConfirmModal";
+import { CompaniesSummary } from "../components/CompaniesSummary";
+import { CompaniesFiltersBar } from "../components/CompaniesFiltersBar";
 import type { Company, CompanyCreate } from "../types/company";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 export function CompaniesPage() {
   const navigate = useNavigate();
-  const { companies, loading, handleCreate, handleUpdate, handleToggleActive } = useCompanies();
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role_id === 1;
+  const { companies, loading, handleCreate, handleUpdate, handleToggleActive, handleDelete } = useCompanies();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("Todos los estados");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [viewingCompany, setViewingCompany] = useState<Company | null>(null);
   const [togglingCompanyId, setTogglingCompanyId] = useState<number | null>(null);
+  const [deletingCompanyId, setDeletingCompanyId] = useState<number | null>(null);
 
   const totalEmpresas = companies.length;
   const totalActivas = companies.filter((c) => c.active).length;
@@ -35,68 +39,50 @@ export function CompaniesPage() {
       .toLowerCase()
       .includes(search.toLowerCase());
     const matchStatus =
-      statusFilter === "Todos los estados" ||
-      (statusFilter === "Activo" ? c.active : !c.active);
+      statusFilter === "all" ||
+      (statusFilter === "active" ? c.active : !c.active);
     return matchSearch && matchStatus;
   });
 
   const togglingCompany = companies.find((c) => c.id === togglingCompanyId);
+  const deletingCompany = companies.find((c) => c.id === deletingCompanyId);
 
   return (
     <div className="h-screen flex flex-col">
       <Header />
       <div className="flex flex-1 min-h-0">
-        <SidebarAdmin />
+        {isAdmin ? <SidebarAdmin /> : <SidebarAdviser />}
         <main className="flex-1 p-3 sm:p-6 overflow-auto">
 
           {/* Titulo y boton */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
             <div className="flex items-center gap-2">
               <BackButton onClick={() => navigate(-1)} />
-              <h1 className="text-xl sm:text-2xl font-bold">Gestión de Empresas</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">
+                {isAdmin ? "Gestión de Empresas" : "Empresas"}
+              </h1>
             </div>
-            <Button onClick={() => setShowCreateModal(true)}>+ Nueva Empresa</Button>
+            {isAdmin && (
+              <Button onClick={() => setShowCreateModal(true)}>+ Nueva Empresa</Button>
+            )}
           </div>
 
           {/* Tarjetas de conteo */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
-            <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
-              <span className="text-xl sm:text-2xl">🏢</span>
-              <div>
-                <p className="text-lg sm:text-xl font-bold">{totalEmpresas}</p>
-                <p className="text-xs sm:text-sm text-gray-500">Total Empresas</p>
-              </div>
-            </div>
-            <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
-              <span className="text-xl sm:text-2xl">✅</span>
-              <div>
-                <p className="text-lg sm:text-xl font-bold">{totalActivas}</p>
-                <p className="text-xs sm:text-sm text-gray-500">Activas</p>
-              </div>
-            </div>
-            <div className="border rounded-lg p-3 sm:p-4 flex items-center gap-3">
-              <span className="text-xl sm:text-2xl">⚠️</span>
-              <div>
-                <p className="text-lg sm:text-xl font-bold">{totalInactivas}</p>
-                <p className="text-xs sm:text-sm text-gray-500">Inactivas</p>
-              </div>
-            </div>
-          </div>
+          {isAdmin && (
+            <CompaniesSummary
+              total={totalEmpresas}
+              active={totalActivas}
+              inactive={totalInactivas}
+            />
+          )}
 
           {/* Buscador y filtros */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <SearchBar
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nombre, RFC..."
-              className="flex-1"
-            />
-            <FilterDropdown
-              options={["Todos los estados", "Activo", "Inactivo"]}
-              value={statusFilter}
-              onChange={setStatusFilter}
-            />
-          </div>
+          <CompaniesFiltersBar
+            search={search}
+            onSearchChange={(e) => setSearch(e.target.value)}
+            statusFilter={statusFilter}
+            onStatusFilterChange={(e) => setStatusFilter(e.target.value)}
+          />
 
           {/* Tabla */}
           {loading ? (
@@ -131,18 +117,36 @@ export function CompaniesPage() {
                   {
                     header: "Acción",
                     accessor: (c) => (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setViewingCompany(c)}
-                          className="border rounded-full px-4 py-1 text-sm hover:bg-gray-100 transition">
-                          Ver
-                        </button>
-                        <button
-                          onClick={() => setEditingCompany(c)}
-                          className="border rounded-full px-4 py-1 text-sm hover:bg-gray-100 transition">
-                          Editar
-                        </button>
-                        <DeleteButton onClick={() => setTogglingCompanyId(c.id)} />
+                      <div className="flex gap-2 items-center">
+                        {isAdmin && (
+                          <>
+                            <button
+                              onClick={() => setViewingCompany(c)}
+                              className="bg-blue-50 text-blue-600 rounded-full px-4 py-2 text-sm font-medium hover:bg-blue-100 transition">
+                              Ver detalles
+                            </button>
+                            <button
+                              onClick={() => setEditingCompany(c)}
+                              className="bg-amber-50 text-amber-600 rounded-full px-4 py-2 text-sm font-medium hover:bg-amber-100 transition">
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => setTogglingCompanyId(c.id)}
+                              title={c.active ? "Desactivar empresa" : "Activar empresa"}
+                              className={`w-10 h-6 rounded-full flex items-center transition-colors duration-300 px-0.5 ${c.active ? "bg-green-500" : "bg-gray-300"}`}>
+                              <span className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300 ${c.active ? "translate-x-4" : "translate-x-0"}`} />
+                            </button>
+                            <button
+                              onClick={() => setDeletingCompanyId(c.id)}
+                              title="Eliminar empresa"
+                              className="bg-red-50 text-red-500 p-2 rounded-full hover:bg-red-100 transition">
+                              <TrashIcon className="w-5 h-5" />
+                            </button>
+                          </>
+                        )}
+                        {!isAdmin && (
+                          <span className="text-xs text-gray-400 italic">Solo lectura</span>
+                        )}
                       </div>
                     ),
                   },
@@ -183,13 +187,26 @@ export function CompaniesPage() {
 
       {togglingCompanyId !== null && (
         <ConfirmModal
-          message={`¿Desea ${togglingCompany?.active ? "desactivar" : "activar"} esta empresa?`}
+          message={`¿Desea ${togglingCompany?.active ? "desactivar" : "activar"} la empresa "${togglingCompany?.name}"?`}
           confirmLabel={togglingCompany?.active ? "Desactivar" : "Activar"}
           confirmColor={togglingCompany?.active ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}
           onCancel={() => setTogglingCompanyId(null)}
           onConfirm={async () => {
             await handleToggleActive(togglingCompanyId);
             setTogglingCompanyId(null);
+          }}
+        />
+      )}
+
+      {deletingCompanyId !== null && (
+        <ConfirmModal
+          message={`¿Está seguro que desea eliminar la empresa "${deletingCompany?.name}"? Esta acción no se puede deshacer.`}
+          confirmLabel="Eliminar"
+          confirmColor="bg-red-600 hover:bg-red-700"
+          onCancel={() => setDeletingCompanyId(null)}
+          onConfirm={async () => {
+            await handleDelete(deletingCompanyId);
+            setDeletingCompanyId(null);
           }}
         />
       )}

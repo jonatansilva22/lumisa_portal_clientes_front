@@ -31,3 +31,47 @@ export async function getUnreadMessages(): Promise<Chat[]> {
   const res = await chatApi.get<Chat[]>("/chats/unread/", getAuthHeader());
   return res.data;
 }
+
+//Mensajes directos
+
+// Tipos para usuarios
+export interface User {
+  id: number;
+  name: string;
+  last_name: string;
+  email: string;
+  role_id: number;
+  role?: {
+    id: number;
+    name: string;
+  };
+  active: boolean;
+}
+
+// Obtener todos los usuarios activos
+export async function getAllActiveUsers(): Promise<User[]> {
+  const res = await axios.get<User[]>("http://localhost:8000/users/", getAuthHeader());
+  return res.data.filter(u => u.active);
+}
+
+// Obtener mensajes directos con un usuario
+export async function getDirectMessages(userId: number): Promise<Chat[]> {
+  const res = await chatApi.get<Chat[]>(`/chats/direct/${userId}`, getAuthHeader());
+  return res.data;
+}
+
+// Enviar mensaje directo
+export async function sendDirectMessage(receiverId: number, message: string): Promise<Chat> {
+  const res = await chatApi.post<Chat>(
+    "/chats/direct",
+    { receiver_id: receiverId, message },
+    getAuthHeader()
+  );
+  return res.data;
+}
+
+// Obtener mis conversaciones directas (solo usuarios con quien ya he hablado)
+export async function getMyDirectConversations(): Promise<User[]> {
+  const res = await chatApi.get<User[]>("/chats/direct/conversations", getAuthHeader());
+  return res.data;
+}

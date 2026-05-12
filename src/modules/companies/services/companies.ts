@@ -31,3 +31,7 @@ export async function toggleCompanyActive(id: number): Promise<Company> {
   const res = await api.patch<Company>(`/companies/${id}/active`, {}, getAuthHeader());
   return res.data;
 }
+
+export async function deleteCompany(id: number): Promise<void> {
+  await api.delete(`/companies/${id}`, getAuthHeader());
+}

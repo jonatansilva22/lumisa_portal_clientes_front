@@ -65,7 +65,7 @@ export function AppRoutes() {
 
         <Route path="/companies"
       element={
-        <ProtectedRoute allowedRoles={[1]}>
+        <ProtectedRoute allowedRoles={[1, 2]}>
           <CompaniesPage />
         </ProtectedRoute>
       } />
