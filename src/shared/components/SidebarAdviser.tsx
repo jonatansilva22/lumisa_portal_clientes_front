@@ -43,6 +43,7 @@ export function SidebarAdviser() {
         <SidebarItem
           icon={<HomeIcon className="w-6 h-6" />}
           label="Inicio"
+          onClick={() => navigate("/adviser")}
         />
 
         <SidebarItem

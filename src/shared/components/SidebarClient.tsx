@@ -32,7 +32,7 @@ export function SidebarClient() {
         <Logo src={LumisaLogo} className="h-20 w-30" />
       </div>
       <nav className="flex flex-col gap-2 w-full">
-        <SidebarItem icon={<HomeIcon className="w-6 h-6" />} label="Inicio" />
+        <SidebarItem icon={<HomeIcon className="w-6 h-6" />} label="Inicio" onClick={() => navigate('/client')} />
         <SidebarItem icon={<ShoppingBagIcon className="w-6 h-6" />} label="Pedidos" onClick={() => navigate('/orders')} />
         <SidebarItem icon={<CubeIcon className="w-6 h-6" />} label="Productos" onClick={() => navigate('/catalog')} />
         <SidebarItem
