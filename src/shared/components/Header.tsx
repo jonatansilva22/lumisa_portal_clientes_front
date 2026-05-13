@@ -64,9 +64,14 @@ export function Header() {
   };
 
   return (
-    <header className="w-full flex items-center justify-between bg-gray-200 px-4 sm:px-12 py-0 shadow-sm h-18">
-      <div className="flex items-center h-full">
-        <h1 className="text-2xl font-bold">Lumisa</h1>
+    <header className="w-full flex items-center justify-between bg-gradient-to-r from-blue-200 via-blue-100 to-blue-300 px-4 sm:px-10 py-0 shadow-lg h-20 border-b border-blue-200/60 backdrop-blur-md z-40">
+      <div className="flex items-center h-full gap-4">
+        <div className="flex flex-col leading-tight">
+          <span className="text-3xl font-extrabold text-blue-900 drop-shadow tracking-tight leading-none">LUMISA</span>
+          <span className="text-xs sm:text-sm font-bold tracking-widest uppercase mt-1 text-blue-800/90">
+            C O M <span className="text-[#60a5fa]">E R I</span> C I A L I Z A D O R A
+          </span>
+        </div>
       </div>
       <div className="flex items-center gap-6 h-full">
         {!isAdmin && <CartIconWithBadge count={cartCount} className="scale-125" />}
@@ -110,7 +115,7 @@ export function Header() {
           )}
         </div>
 
-        <UserName name={user ? `${user.name} ${user.last_name}` : "USUARIO"} className="text-xl" />
+        <UserName name={user ? `${user.name}` : "USUARIO"} className="text-xl" />
         <UserAvatar src={user?.image_url} />
       </div>
     </header>
