@@ -10,7 +10,7 @@ export function Card({ children, className = "" }: CardProps) {
     <div
       className={`
         bg-white rounded-2xl shadow-2xl border border-gray-200
-        px-6 py-6 m-2
+        p-2 sm:p-4 md:p-6 m-2
         ${className}
       `}
     >

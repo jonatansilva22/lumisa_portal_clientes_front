@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useAdvisorDashboard } from '../hooks/useDashboard';
-import DashboardAdvisor from '../components/DashboardAdvisor';
+import { DashboardTabsAdvisor } from '../components/DashboardTabsAdvisor';
 import { Header, SidebarAdviser } from '../../../shared/components/Index';
 import { LoadingSpinner } from '../../../shared/ui/LoadingSpinner';
 
@@ -18,10 +18,10 @@ export default function AdvisorDashboardPage() {
       <div className="flex flex-1 min-h-0">
         <SidebarAdviser />
         <main className="flex-1 p-4 overflow-y-auto bg-gray-50">
-          <h1 className="text-2xl font-bold mb-6">Dashboard Asesor</h1>
+          <h1 className="text-2xl font-bold mb-6 text-center">Dashboard Asesor</h1>
           {loading && <LoadingSpinner className="my-12" />}
           {error && <div className="text-red-500 mb-4">{error}</div>}
-          {data && <DashboardAdvisor data={data} />}
+          {data && <DashboardTabsAdvisor advisorData={data} />}
         </main>
       </div>
     </div>

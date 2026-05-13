@@ -47,10 +47,10 @@ export default function BarChart({ data, title }: Props) {
       legend: { display: false },
       title: { display: !!title, text: title },
       datalabels: {
-        anchor: 'center',
-        align: 'center',
+        anchor: 'center' as const,
+        align: 'center' as const,
         color: '#fff',
-        font: { weight: 'bold', size: 16 },
+        font: { weight: 'bold' as const, size: 16 },
         formatter: (value: number) => value === 0 ? '' : value,
         offset: 0,
       },
@@ -63,12 +63,12 @@ export default function BarChart({ data, title }: Props) {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: '#888', font: { weight: 'bold' } },
+        ticks: { color: '#888', font: { weight: 'bold' as const } },
       },
       y: {
         beginAtZero: true,
         grid: { color: '#eee' },
-        ticks: { stepSize: 1, color: '#888', font: { weight: 'bold' } },
+        ticks: { stepSize: 1, color: '#888', font: { weight: 'bold' as const } },
       },
     },
   };
@@ -76,8 +76,8 @@ export default function BarChart({ data, title }: Props) {
   return (
     <div className="w-full flex flex-col items-center">
       {title && <div className="font-semibold text-lg mb-2 w-full text-center">{title}</div>}
-      <div className="w-80 h-64">
-        <Bar data={chartData} options={options} plugins={[ChartDataLabels]} />
+      <div className="w-full h-64 max-w-xs mx-auto">
+        <Bar data={chartData} options={options} plugins={[ChartDataLabels]} style={{ width: '100%', height: '100%' }} />
       </div>
     </div>
   );

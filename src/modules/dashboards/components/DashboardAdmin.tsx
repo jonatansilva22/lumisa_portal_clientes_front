@@ -1,10 +1,7 @@
 
-import PieChart from './PieChart';
-import BarChart from './BarChart';
-import PaymentsPieChart from './PaymentsPieChart';
-import DashboardIncidents from './DashboardIncidents';
-import { Card } from '../../../shared/ui/Card';
-import { StatusBadge } from '../../../shared/ui/StatusBadge';
+import React from "react";
+import ChartsSection from "./ChartsSection";
+import DashboardInfoCard from "./DashboardInfoCard";
 import {
   UserGroupIcon,
   UserIcon,
@@ -13,16 +10,16 @@ import {
   ShoppingBagIcon,
   CubeIcon,
   CurrencyDollarIcon,
-  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 import type { AdminDashboard } from '../types/dashboard';
 
 interface Props {
   data: AdminDashboard;
+  section?: 'Usuarios' | 'Empresas' | 'Pedidos' | 'Pagos' | 'Productos';
 }
 
 
-export default function DashboardAdmin({ data }: Props) {
+export default function DashboardAdmin({ data, section }: Props) {
   // KPIs
   const kpis = [
     {
@@ -63,7 +60,10 @@ export default function DashboardAdmin({ data }: Props) {
     },
     {
       label: 'Pagos',
-      value: data.total_payments,
+      value: (data.payment_status?.pending || 0)
+        + (data.payment_status?.paid || 0)
+        + (data.payment_status?.rejected || 0)
+        + (data.payment_status?.cancelled || 0),
       icon: <CurrencyDollarIcon className="w-7 h-7 text-emerald-500" />,
       section: 'Pagos',
     },
@@ -122,180 +122,88 @@ export default function DashboardAdmin({ data }: Props) {
     },
   ];
 
+  // Filtrar secciones según la pestaña activa
+  const filteredSections = section ? sections.filter(s => s.title === section) : sections;
 
-  // Leyendas para gráficas de pastel
-  function PieLegend({ labels, colors, values, capitalizeLabels = false }: { labels: string[]; colors: string[]; values: number[]; capitalizeLabels?: boolean }) {
-    return (
-      <ul className="dashboard-pie-legend text-sm mt-2 grid grid-cols-2 gap-x-4 gap-y-2 w-full">
-        {labels.map((label, i) => {
-          const displayLabel = capitalizeLabels ? label.charAt(0).toUpperCase() + label.slice(1).toLowerCase() : label;
-          return (
-            <li key={label} className="flex items-center gap-2 text-base">
-              <span className="inline-block w-4 h-4 rounded mr-2" style={{ background: colors[i] }}></span>
-              <span>{displayLabel}:</span>
-              <span className="font-bold text-lg">{values[i]}</span>
-            </li>
-          );
-        })}
-      </ul>
+  // Colores para los gráficos
+  const userRolesColors = ["#60a5fa", "#34d399", "#a78bfa", "#f472b6"];
+  const ordersStateColors = ["#fbbf24", "#a78bfa", "#34d399", "#9ca3af", "#f87171"];
+  const productsColors = ["#34d399", "#9ca3af"];
+
+  // Totales para leyendas
+  const totalUserRoles = data.user_roles_pie?.values?.reduce((a, b) => a + b, 0) || 0;
+  const totalOrdersState = data.orders_pie?.values?.reduce((a, b) => a + b, 0) || 0;
+  const totalOrdersBar = data.orders_bar?.values?.reduce((a, b) => a + b, 0) || 0;
+  const totalProducts = data.products_pie?.values?.reduce((a, b) => a + b, 0) || 0;
+  const totalPaymentsBar = data.payments_bar?.values?.reduce((a, b) => a + b, 0) || 0;
+    // Layout principal fragmentado
+    const infoSection = filteredSections[0];
+    // Totales y colores ya definidos arriba
+    const charts = (
+      <ChartsSection
+        data={data}
+        section={section}
+        userRolesColors={userRolesColors}
+        ordersStateColors={ordersStateColors}
+        productsColors={productsColors}
+        totalUserRoles={totalUserRoles}
+        totalOrdersState={totalOrdersState}
+        totalOrdersBar={totalOrdersBar}
+        totalProducts={totalProducts}
+        totalPaymentsBar={totalPaymentsBar}
+      />
     );
-  }
-
-  // Utilidades para totales
-  const totalUserRoles = data.user_roles_pie.values.reduce((a, b) => a + b, 0);
-  const totalOrdersState = data.orders_pie.values.reduce((a, b) => a + b, 0);
-  const totalProducts = data.products_pie.values.reduce((a, b) => a + b, 0);
-  const totalOrdersBar = data.orders_bar.values.reduce((a, b) => a + b, 0);
-  const totalPaymentsBar = data.payments_bar.values.reduce((a, b) => a + b, 0);
-  const totalPaymentsPie = [
-    data.payment_status.pending,
-    (data.payment_status as any).paid ?? 0,
-    data.payment_status.rejected,
-    data.payment_status.cancelled,
-  ].reduce((a, b) => a + b, 0);
-
-  // Colores personalizados para cada gráfica de pastel
-  const userRolesColors = ['#60a5fa', '#a78bfa', '#fbbf24', '#34d399', '#f87171', '#f472b6', '#facc15', '#38bdf8', '#818cf8', '#fca5a5'];
-  const ordersStateColors = data.orders_pie.labels.map(label => {
-    const map: Record<string, string> = {
-      'Pendiente': '#fbbf24',
-      'Autorizado': '#a78bfa',
-      'Pagado': '#34d399',
-      'Cancelado': '#9ca3af',
-      'Rechazado': '#f87171',
+    // Título y descripción accesibles según la sección
+    const sectionTitles: Record<string, string> = {
+      'Productos': 'Resumen de productos',
+      'Usuarios': 'Resumen de usuarios',
+      'Empresas': 'Resumen de empresas',
+      'Pagos': 'Resumen de pagos',
+      'Pedidos': 'Resumen de pedidos',
     };
-    return map[label] || '#38bdf8';
-  });
-  const productsColors = ['#34d399', '#9ca3af'];
-  const paymentsColors = ['#fbbf24', '#34d399', '#f87171', '#60a5fa'];
+    const sectionDescriptions: Record<string, string> = {
+      'Productos': 'Visualiza el total de productos, su estado (activos/inactivos) y cuántos están en carritos.',
+      'Usuarios': 'Consulta la cantidad de usuarios, clientes, asesores y administradores registrados.',
+      'Empresas': 'Mira el total de empresas gestionadas en la plataforma.',
+      'Pagos': 'Revisa el total de pagos y su estado actual.',
+      'Pedidos': 'Observa el total de pedidos y su distribución por estado.',
+    };
+    const currentTitle = section && sectionTitles[section] ? sectionTitles[section] : 'Resumen general';
+    const currentDesc = section && sectionDescriptions[section] ? sectionDescriptions[section] : '';
 
-  return (
-    <div className="flex flex-col gap-12">
-      {/* Información General */}
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Información General</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {sections.map(section => (
-            <Card key={section.title} className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 mb-2">
-                {section.icon}
-                <span className="font-bold text-lg text-gray-700">{section.title}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {section.kpis.map(kpi => (
-                  <div key={kpi.label} className="flex items-center gap-2 bg-gray-50 rounded-lg p-2">
-                    {kpi.icon}
-                    <div>
-                      <div className="text-xs text-gray-500">{kpi.label}</div>
-                      <div className="text-xl font-bold text-gray-800">{kpi.value}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Enriquecimiento visual por sección */}
-              {section.title === 'Empresas' && (
-                <div className="mt-2 flex flex-wrap gap-2 items-center">
-                  <span className="text-xs text-gray-500">Activas:</span>
-                  <span className="inline-block px-2 py-1 rounded bg-green-100 text-green-700 font-bold">
-                    {data.total_companies > 0 ? Math.floor(data.total_companies * 0.8) : 0}
-                  </span>
-                  <span className="text-xs text-gray-500">Inactivas:</span>
-                  <span className="inline-block px-2 py-1 rounded bg-gray-200 text-gray-700 font-bold">
-                    {data.total_companies > 0 ? Math.ceil(data.total_companies * 0.2) : 0}
-                  </span>
-                  {data.total_companies === 0 && <span className="text-xs text-gray-400 ml-2">Sin empresas registradas</span>}
-                </div>
-              )}
-              {section.title === 'Pedidos' && (
-                <div className="mt-2 flex flex-wrap gap-2 items-center">
-                  {Object.entries(data.orders_by_status).map(([status, value]) => {
-                    const colorMap: Record<string, string> = {
-                      'Pendiente': 'bg-yellow-100 text-yellow-700',
-                      'Autorizado': 'bg-purple-100 text-purple-700',
-                      'Pagado': 'bg-green-100 text-green-700',
-                      'Cancelado': 'bg-gray-200 text-gray-700',
-                      'Rechazado': 'bg-red-100 text-red-700',
-                    };
-                    return (
-                      <span key={status} className={`inline-block px-2 py-1 rounded font-bold text-xs ${colorMap[status] || 'bg-blue-100 text-blue-700'}`}>{status}: {value}</span>
-                    );
-                  })}
-                </div>
-              )}
-              {section.title === 'Pagos' && (
-                <div className="mt-2 flex flex-wrap gap-2 items-center">
-                  <span className="text-xs text-gray-500">Pendientes:</span>
-                  <span className="inline-block px-2 py-1 rounded bg-yellow-100 text-yellow-700 font-bold">{data.payment_status.pending}</span>
-                  <span className="text-xs text-gray-500">Pagados:</span>
-                  <span className="inline-block px-2 py-1 rounded bg-green-100 text-green-700 font-bold">{data.payment_status.paid}</span>
-                  <span className="text-xs text-gray-500">Rechazados:</span>
-                  <span className="inline-block px-2 py-1 rounded bg-red-100 text-red-700 font-bold">{data.payment_status.rejected}</span>
-                  <span className="text-xs text-gray-500">Cancelados:</span>
-                  <span className="inline-block px-2 py-1 rounded bg-gray-200 text-gray-700 font-bold">{data.payment_status.cancelled}</span>
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
+    return (
+      <div className="w-full flex flex-col items-center">
+        <h2 className="text-2xl font-extrabold mb-2 text-gray-800 tracking-tight">{currentTitle}</h2>
+        {currentDesc && <p className="mb-6 text-gray-500 text-base text-center max-w-2xl">{currentDesc}</p>}
+        {/* Layout horizontal: card info a la izquierda, gráfica a la derecha */}
+        {section && infoSection ? (
+          <div className="flex flex-col md:flex-row items-start justify-center w-full h-full min-h-100 gap-8">
+            <div className="flex justify-center w-full">
+              <DashboardInfoCard
+                title={infoSection.title}
+                icon={infoSection.icon}
+                kpis={infoSection.kpis}
+                data={data}
+              />
+            </div>
+            <div className="flex justify-center w-full">
+              {/* Título específico para la gráfica */}
+              {Array.isArray(charts) ? charts[0] : charts}
+            </div>
+          </div>
+        ) : (
+          <>
+            {charts}
+            {infoSection && (
+              <DashboardInfoCard
+                title={infoSection.title}
+                icon={infoSection.icon}
+                kpis={infoSection.kpis}
+                data={data}
+              />
+            )}
+          </>
+        )}
       </div>
-
-      {/* Gráficas */}
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Gráficas</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {/* Usuarios por rol */}
-          <Card className="flex flex-col items-center justify-center">
-            <div className="font-semibold text-lg mb-2 w-full text-center">Usuarios por rol</div>
-            <PieChart data={data.user_roles_pie} backgroundColor={userRolesColors} />
-            <div className="text-sm text-gray-500 mt-2 mb-1 text-center w-full">Total: <span className="font-bold text-xl text-gray-700">{totalUserRoles}</span></div>
-            <PieLegend labels={data.user_roles_pie.labels} colors={userRolesColors} values={data.user_roles_pie.values} capitalizeLabels={true} />
-          </Card>
-          {/* Pedidos por estado */}
-          <Card className="flex flex-col items-center justify-center">
-            <div className="font-semibold text-lg mb-2 w-full text-center">Pedidos por estado</div>
-            <PieChart data={data.orders_pie} backgroundColor={ordersStateColors} />
-            <div className="text-sm text-gray-500 mt-2 mb-1 text-center w-full">Total: <span className="font-bold text-xl text-gray-700">{totalOrdersState}</span></div>
-            <PieLegend labels={data.orders_pie.labels} colors={ordersStateColors} values={data.orders_pie.values} />
-          </Card>
-          {/* Productos activos/inactivos */}
-          <Card className="flex flex-col items-center justify-center">
-            <div className="font-semibold text-lg mb-2 w-full text-center">Productos activos/inactivos</div>
-            <PieChart data={data.products_pie} backgroundColor={productsColors} />
-            <div className="text-sm text-gray-500 mt-2 mb-1 text-center w-full">Total: <span className="font-bold text-xl text-gray-700">{totalProducts}</span></div>
-            <PieLegend labels={data.products_pie.labels} colors={productsColors} values={data.products_pie.values} />
-          </Card>
-          {/* Pedidos por mes */}
-          <Card className="flex flex-col items-center justify-center">
-            <div className="font-semibold text-lg mb-2 w-full text-center">Pedidos por mes</div>
-            <BarChart data={{
-              ...data.orders_bar,
-              // Colores personalizados para barras
-              backgroundColor: data.orders_bar.labels.map(() => '#60a5fa'),
-              borderRadius: 8,
-            }} />
-            <div className="text-sm text-gray-500 mt-2 mb-1 text-center w-full">Total: <span className="font-bold text-xl text-gray-700">{totalOrdersBar}</span></div>
-          </Card>
-          {/* Pagos por mes */}
-          <Card className="flex flex-col items-center justify-center">
-            <div className="font-semibold text-lg mb-2 w-full text-center">Pagos por mes</div>
-            <BarChart data={{
-              ...data.payments_bar,
-              backgroundColor: data.payments_bar.labels.map(() => '#34d399'),
-              borderRadius: 8,
-            }} />
-            <div className="text-sm text-gray-500 mt-2 mb-1 text-center w-full">Total: <span className="font-bold text-xl text-gray-700">{totalPaymentsBar}</span></div>
-          </Card>
-          {/* Pagos por estado */}
-          <Card className="flex flex-col items-center justify-center">
-            <div className="font-semibold text-lg mb-2 w-full text-center">Pagos por estado</div>
-            <PaymentsPieChart paymentStatus={data.payment_status} />
-          </Card>
-        </div>
-      </div>
-
-      {/* Incidencias */}
-      <DashboardIncidents incidents={data.incidents} />
-    </div>
-  );
+    );
 }

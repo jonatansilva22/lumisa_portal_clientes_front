@@ -39,7 +39,14 @@ export default function PieChart({ data, title, backgroundColor }: Props) {
       datalabels: {
         color: '#222',
         font: { weight: 'bold' as const, size: 18 },
-        formatter: (value: number) => value === 0 ? '' : value,
+        formatter: (_value: number, context: any) => {
+          const dataset = context.chart.data.datasets[0];
+          const total = dataset.data.reduce((a: number, b: number) => a + b, 0);
+          const val = dataset.data[context.dataIndex];
+          if (!val || total === 0) return '';
+          const percent = Math.round((val / total) * 100);
+          return percent + '%';
+        },
       },
       legend: { display: false },
     },

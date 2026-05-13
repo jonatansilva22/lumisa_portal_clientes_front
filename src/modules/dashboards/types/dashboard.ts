@@ -28,6 +28,7 @@ export type ClientDashboard = {
   orders_pie: PieChartData;
   orders_bar: BarChartData;
   recent_activity: string[];
+  total_products: number;
 };
 
 export type AdvisorDashboard = {
@@ -36,11 +37,14 @@ export type AdvisorDashboard = {
   orders_by_status: Record<string, number>;
   products_managed: number;
   payment_status: PaymentStatusSummary;
+  companies_info: Array<Record<string, any>>; // Igual que el admin
   incidents: Array<Record<string, any>>;
   orders_pie: PieChartData;
   orders_bar: BarChartData;
   notifications: Array<Record<string, any>>;
   recent_activity: string[];
+  total_companies?: number; // compatibilidad legacy opcional
+  companies_pie: PieChartData;
 };
 
 export type AdminDashboard = {
@@ -49,6 +53,8 @@ export type AdminDashboard = {
   total_advisors: number;
   total_admins: number;
   total_companies: number;
+  active_companies: number;
+  inactive_companies: number;
   total_orders: number;
   total_payments: number;
   total_products: number;

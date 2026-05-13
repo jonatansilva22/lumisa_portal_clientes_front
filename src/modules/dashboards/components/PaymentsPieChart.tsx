@@ -37,7 +37,8 @@ export default function PaymentsPieChart({ paymentStatus }: Props) {
       {
         data: values,
         backgroundColor: COLORS,
-        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.7)',
+        borderWidth: 4,
       },
     ],
   };
@@ -46,8 +47,15 @@ export default function PaymentsPieChart({ paymentStatus }: Props) {
     plugins: {
       datalabels: {
         color: '#222',
-        font: { weight: 'bold', size: 18 },
-        formatter: (value: number) => value === 0 ? '' : value,
+        font: { weight: 'bold' as const, size: 18 },
+        formatter: (_value: number, context: any) => {
+          const dataset = context.chart.data.datasets[0];
+          const total = dataset.data.reduce((a: number, b: number) => a + b, 0);
+          const val = dataset.data[context.dataIndex];
+          if (!val || total === 0) return '';
+          const percent = Math.round((val / total) * 100);
+          return percent + '%';
+        },
       },
       legend: { display: false },
     },
@@ -55,19 +63,12 @@ export default function PaymentsPieChart({ paymentStatus }: Props) {
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="w-64 h-64">
-        <Pie data={chartData} options={options} plugins={[ChartDataLabels]} />
+      <div className="w-64 h-64 rounded-2xl bg-white/60 backdrop-blur-md border border-white/30 shadow-xl drop-shadow-xl flex items-center justify-center">
+        <div className="w-full h-full">
+          <Pie data={chartData} options={options} plugins={[ChartDataLabels]} />
+        </div>
       </div>
       <div className="text-sm text-gray-500 mt-2 mb-1 text-center w-full">Total: <span className="font-bold text-xl text-gray-700">{total}</span></div>
-      <ul className="text-sm mt-2 grid grid-cols-2 gap-x-4 gap-y-2 w-full">
-        {LABELS.map((label, i) => (
-          <li key={label} className="flex items-center gap-2 text-base">
-            <span style={{ background: COLORS[i], width: 16, height: 16, borderRadius: 3, display: 'inline-block' }}></span>
-            <span>{label}:</span>
-            <span className="font-bold text-lg">{values[i]}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
