@@ -87,6 +87,11 @@ export function SidebarAdviser() {
           label="Productos"
           onClick={() => navigate("/catalog")}
         />
+        <SidebarItem
+          icon={<svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><path d="M3 4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4zm3 4h12M7 12h5m-5 4h8"/></svg>}
+          label="Historial de ventas"
+          onClick={() => navigate("/sales-history")}
+        />
 
       </nav>
 
