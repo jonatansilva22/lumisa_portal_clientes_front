@@ -37,8 +37,7 @@ export default function PaymentsPieChart({ paymentStatus }: Props) {
       {
         data: values,
         backgroundColor: COLORS,
-        borderColor: 'rgba(255,255,255,0.7)',
-        borderWidth: 4,
+        borderWidth: 1,
       },
     ],
   };
@@ -63,12 +62,11 @@ export default function PaymentsPieChart({ paymentStatus }: Props) {
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="w-64 h-64 rounded-2xl bg-white/60 backdrop-blur-md border border-white/30 shadow-xl drop-shadow-xl flex items-center justify-center">
-        <div className="w-full h-full">
-          <Pie data={chartData} options={options} plugins={[ChartDataLabels]} />
-        </div>
+      <div className="w-64 h-64">
+        <Pie data={chartData} options={options} plugins={[ChartDataLabels]} />
       </div>
       <div className="text-sm text-gray-500 mt-2 mb-1 text-center w-full">Total: <span className="font-bold text-xl text-gray-700">{total}</span></div>
+     
     </div>
   );
 }
