@@ -20,6 +20,8 @@ import PaymentsPayPage from "../modules/payments/pages/PaymentsPayPage";
 import ClientDashboardPage from "../modules/dashboards/pages/ClientDashboardPage";
 import AdminDashboardPage from "../modules/dashboards/pages/AdminDashboardPage";
 import AdvisorDashboardPage from "../modules/dashboards/pages/AdvisorDashboardPage";
+import SalesHistoryPage from "../modules/sales/pages/SalesHistoryPage";
+import PurchaseHistoryPage from "../modules/sales/pages/PurchaseHistoryPage";
 
 export function AppRoutes() {
   return (
@@ -151,6 +153,20 @@ export function AppRoutes() {
       } />
 
 
+      <Route path="/sales-history"
+      element={
+        <ProtectedRoute allowedRoles={[1,2]}>
+          <SalesHistoryPage />
+        </ProtectedRoute>
+      } />
+
+   
+    <Route path="/purchase-history"
+      element={
+        <ProtectedRoute allowedRoles={[3]}>
+          <PurchaseHistoryPage />
+        </ProtectedRoute>
+      } />
 
       {/* Ruta para acceso no autorizado */}
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
