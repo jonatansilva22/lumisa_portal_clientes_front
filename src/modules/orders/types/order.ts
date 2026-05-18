@@ -34,6 +34,9 @@ export interface Order {
   created_at?: string;
   updated_at?: string;
   order_details: OrderDetail[];
+
+  // Compatibilidad: algunos endpoints incluyen shipping_price
+  shipping_price?: number | string;
 }
 
 export interface OrderStatus {

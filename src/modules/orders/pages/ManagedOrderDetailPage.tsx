@@ -8,6 +8,7 @@ import { useAuthStore } from "../../auth/store/auth";
 import { OrderDetailHeaderCard } from "../components/OrderDetailHeaderCard";
 import { OrderGeneralInfoCard } from "../components/OrderGeneralInfoCard";
 import { OrderProductsTableCard } from "../components/OrderProductsTableCard";
+import { updateShippingPrice } from "../services/orders";
 import { OrderStatusEditCard } from "../components/OrderStatusEditCard";
 import { OrderAdvisorCard } from "../components/OrderAdvisorCard";
 import { useManagedOrderDetail } from "../hooks/useManagedOrderDetail";
@@ -42,6 +43,24 @@ export default function ManagedOrderDetailPage() {
   const isAdmin = user?.role_id === 1;
 
   const { order, statuses, loading, saving, error, fetchOrder, fetchStatuses, changeStatus, autoAssignAdvisor, changeAdvisor } = useManagedOrderDetail();
+  const [shippingLoading, setShippingLoading] = useState(false);
+    // Permitir editar precio de envío solo para admin o asesor
+    const canEditShippingPrice = isAdmin || user?.role_id === 2;
+
+    // Handler para actualizar el precio de envío
+    const handleUpdateShippingPrice = async (newShippingPrice: number) => {
+      if (!order) return;
+      setShippingLoading(true);
+      try {
+        await updateShippingPrice(order.id, newShippingPrice);
+        await fetchOrder(order.id); // Refresca el pedido
+        toast.success("Precio de envío actualizado");
+      } catch (err: any) {
+        toast.error(err?.response?.data?.detail ?? "Error al actualizar el precio de envío");
+      } finally {
+        setShippingLoading(false);
+      }
+    };
   const [productNames, setProductNames] = useState<Record<number, string>>({});
 
   const orderId = Number(id);
@@ -207,7 +226,15 @@ export default function ManagedOrderDetailPage() {
                 />
               )}
 
-              <OrderProductsTableCard order={order} productNames={productNames} />
+              <OrderProductsTableCard
+                order={order}
+                productNames={productNames}
+                canEditShippingPrice={canEditShippingPrice}
+                onUpdateShippingPrice={handleUpdateShippingPrice}
+                shippingPrice={(order as any).shipping_price}
+                loading={shippingLoading}
+                disabledEditShippingPrice={statusName.toLowerCase().includes('pagad')}
+              />
 
               {/* Validación de pagos manuales para admin/asesor */}
               {manualPayments.length > 0 && paymentStatuses.length > 0 && manualPayments.map(payment => (
@@ -221,6 +248,7 @@ export default function ManagedOrderDetailPage() {
                       await updateStatus(payment.id, newStatusId);
                       toast.success('Estado de pago actualizado');
                       fetchPayments();
+                      if (order) await fetchOrder(order.id); // Refresca el pedido para reflejar cambios en tiempo real
                     } catch (err) {
                       toast.error('Error al actualizar el estado del pago');
                     }

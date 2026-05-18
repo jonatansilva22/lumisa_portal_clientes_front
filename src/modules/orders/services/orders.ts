@@ -1,3 +1,12 @@
+// Actualizar el precio de envío (solo staff)
+export async function updateShippingPrice(orderId: number, shippingPrice: number): Promise<Order> {
+  const { data } = await api.put<Order>(
+    `/orders/${orderId}/shipping-price`,
+    null,
+    { headers: authHeader(), params: { shipping_price: shippingPrice } }
+  );
+  return data;
+}
 import { api } from '../../../shared/services/axios';
 import type { Order, OrderStatus } from '../types/order';
 
