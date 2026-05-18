@@ -22,6 +22,7 @@ export function UsersPage() {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role_id === 1;
+  const isAdviser = currentUser?.role_id === 2;
   const { users, loading, handleToggleActive, handleCreate, handleUpdate, handleDelete } = useUsers();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -42,21 +43,25 @@ export function UsersPage() {
     return company ? company.name : null;
   };
 
-  // Asesor solo ve clientes
-  const visibleUsers = isAdmin
+  // Ahora admin y asesor ven todos los usuarios, solo cliente ve clientes
+  const visibleUsers = (isAdmin || isAdviser)
     ? users
-    : users.filter((u) => u.role.name === "cliente");
+    : users.filter((u) => u.role.name?.toLowerCase() === "cliente");
 
+  // Totales globales SIEMPRE (no filtrados, insensible a mayúsculas)
   const totalUsuarios = users.length;
-  const totalClientes = users.filter((u) => u.role.name === "cliente").length;
-  const totalAsesores = users.filter((u) => u.role.name === "asesor").length;
-  const totalAdmins = users.filter((u) => u.role.name === "administrador").length;
+  const totalClientes = users.filter((u) => u.role.name?.toLowerCase() === "cliente").length;
+  const totalAsesores = users.filter((u) => u.role.name?.toLowerCase() === "asesor").length;
+  const totalAdmins = users.filter((u) => u.role.name?.toLowerCase() === "administrador").length;
 
+  // Filtros SOLO afectan la tabla
   const filtered = visibleUsers.filter((u) => {
     const matchSearch = `${u.name} ${u.last_name} ${u.email}`
       .toLowerCase()
       .includes(search.toLowerCase());
-    const matchRole = roleFilter === "all" || u.role.name === roleFilter;
+    const matchRole =
+      roleFilter === "all" ||
+      (u.role.name?.toLowerCase() === roleFilter.toLowerCase());
     const matchStatus =
       statusFilter === "all" ||
       (statusFilter === "active" ? u.active : !u.active);
@@ -83,39 +88,62 @@ export function UsersPage() {
         {isAdmin ? <SidebarAdmin /> : <SidebarAdviser />}
         <main className="flex-1 p-3 sm:p-6 overflow-auto">
 
-          {/* Titulo y boton */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
-            <div className="flex items-center gap-2">
+          {/* Titulo centrado y boton */}
+          <div className="relative flex flex-col items-center mb-4 gap-2 w-full">
+            <div className="flex items-center w-full justify-between gap-2">
               <BackButton onClick={() => navigate(-1)} />
-              <h1 className="text-xl sm:text-2xl font-bold">
+              <h1 className="text-xl sm:text-2xl font-bold text-center flex-1">
                 {isAdmin ? "Gestión de Usuarios" : "Clientes"}
               </h1>
             </div>
             {isAdmin && (
-              <Button onClick={() => setShowCreateModal(true)}>+ Nuevo Usuario</Button>
+              <>
+                {/* Botón en el flujo normal en móviles */}
+                <div className="w-full sm:hidden mt-2">
+                  <Button
+                    onClick={() => setShowCreateModal(true)}
+                    className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:from-indigo-600 hover:to-blue-700 transition-all text-base w-full min-w-0"
+                  >
+                    <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Nuevo Usuario
+                  </Button>
+                </div>
+                {/* Botón flotante en escritorio */}
+                <div className="hidden sm:block">
+                  <div className="absolute right-0 top-0">
+                    <Button
+                      onClick={() => setShowCreateModal(true)}
+                      className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:from-indigo-600 hover:to-blue-700 transition-all text-base min-w-[180px]"
+                    >
+                      <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Nuevo Usuario
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
 
-          {/* Tarjetas de conteo */}
-          {isAdmin && (
-            <UsersSummary
-              total={totalUsuarios}
-              clients={totalClientes}
-              advisers={totalAsesores}
-              admins={totalAdmins}
-            />
+          {/* Tarjetas de conteo y filtros: admin y asesor ven todo igual */}
+          {(isAdmin || isAdviser) && (
+            <>
+              <UsersSummary
+                total={totalUsuarios}
+                clients={totalClientes}
+                advisers={totalAsesores}
+                admins={totalAdmins}
+              />
+              <UsersFiltersBar
+                search={search}
+                onSearchChange={(e) => setSearch(e.target.value)}
+                roleFilter={roleFilter}
+                onRoleFilterChange={(e) => setRoleFilter(e.target.value)}
+                statusFilter={statusFilter}
+                onStatusFilterChange={(e) => setStatusFilter(e.target.value)}
+                showRoleFilter={true}
+              />
+            </>
           )}
-
-          {/* Buscador y filtros */}
-          <UsersFiltersBar
-            search={search}
-            onSearchChange={(e) => setSearch(e.target.value)}
-            roleFilter={roleFilter}
-            onRoleFilterChange={(e) => setRoleFilter(e.target.value)}
-            statusFilter={statusFilter}
-            onStatusFilterChange={(e) => setStatusFilter(e.target.value)}
-            showRoleFilter={isAdmin}
-          />
 
           {/* Tabla */}
           {loading ? (
@@ -164,7 +192,7 @@ export function UsersPage() {
                   },
                   {
                     header: "Empresa",
-                    accessor: (u) => u.role.name === "cliente" ? (
+                    accessor: (u) => u.role.name?.toLowerCase() === "cliente" ? (
                       <span className="text-sm text-gray-600">
                         {getCompanyName(u.company_id) ?? <span className="text-gray-400 italic">Sin empresa</span>}
                       </span>
@@ -180,7 +208,7 @@ export function UsersPage() {
                     header: "Acción",
                     accessor: (u) => (
                       <div className="flex gap-2 items-center">
-                        {isAdmin && (
+                        {isAdmin ? (
                           <>
                             <button
                               onClick={() => setEditingUser(u)}
@@ -200,8 +228,7 @@ export function UsersPage() {
                               <TrashIcon className="w-4 h-4" />
                             </button>
                           </>
-                        )}
-                        {!isAdmin && (
+                        ) : (
                           <span className="text-xs text-gray-400 italic">Solo lectura</span>
                         )}
                       </div>

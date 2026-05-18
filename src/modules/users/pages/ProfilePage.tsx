@@ -97,12 +97,11 @@ export function ProfilePage() {
 
     let image_url = user.image_url ?? null;
 
-    // Solo admin puede subir imagen
-    if (imageFile && user.role_id === 1) {
+    // Ahora todos los usuarios pueden subir imagen
+    if (imageFile) {
       try {
         setUploading(true);
         const { upload_url, object_url } = await getS3UploadUrl({
-          module: "users",
           filename: imageFile.name,
           contentType: imageFile.type,
         });
@@ -161,33 +160,20 @@ export function ProfilePage() {
               <div className="flex flex-col items-center -mt-12 px-6 pb-6">
 
                 {/* Avatar */}
-                {user?.role_id === 1 ? (
-                  // ADMIN: Puede cambiar la foto
-                  <label className="cursor-pointer relative group">
-                    {previewUrl ? (
-                      <img src={previewUrl}
-                        className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
-                        onError={(e) => (e.currentTarget.style.display = "none")} />
-                    ) : (
-                      <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-white shadow-md flex items-center justify-center text-gray-400 text-4xl">👤</div>
-                    )}
-                    <div className="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                      <span className="text-white text-xs font-medium">Cambiar</span>
-                    </div>
-                    <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                  </label>
-                ) : (
-                  // ASESOR y CLIENTE: Solo ven la foto, no pueden cambiarla
-                  <div>
-                    {previewUrl ? (
-                      <img src={previewUrl}
-                        className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
-                        onError={(e) => (e.currentTarget.style.display = "none")} />
-                    ) : (
-                      <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-white shadow-md flex items-center justify-center text-gray-400 text-4xl">👤</div>
-                    )}
+                {/* Todos los usuarios pueden cambiar la foto */}
+                <label className="cursor-pointer relative group">
+                  {previewUrl ? (
+                    <img src={previewUrl}
+                      className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
+                      onError={(e) => (e.currentTarget.style.display = "none")} />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-white shadow-md flex items-center justify-center text-gray-400 text-4xl">👤</div>
+                  )}
+                  <div className="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                    <span className="text-white text-xs font-medium">Cambiar</span>
                   </div>
-                )}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                </label>
 
                 <h2 className="mt-3 text-xl font-bold text-gray-800">{user?.name} {user?.last_name}</h2>
                 <p className="text-sm text-gray-400">{user?.email}</p>

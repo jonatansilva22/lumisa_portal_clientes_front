@@ -6,14 +6,13 @@ function authHeader() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export async function getS3UploadUrl({ module, filename, contentType }: {
-  module: string;
+export async function getS3UploadUrl({ filename, contentType }: {
   filename: string;
   contentType: string;
 }) {
   const res = await api.post(
-    "/products/s3-upload-url",
-    { module, filename, content_type: contentType },
+    "/users/s3-upload-url",
+    { filename, content_type: contentType },
     { headers: authHeader() }
   );
   return res.data as { upload_url: string; object_url: string };
