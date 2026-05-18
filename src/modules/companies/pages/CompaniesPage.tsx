@@ -54,21 +54,44 @@ export function CompaniesPage() {
         {isAdmin ? <SidebarAdmin /> : <SidebarAdviser />}
         <main className="flex-1 p-3 sm:p-6 overflow-auto">
 
-          {/* Titulo y boton */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
-            <div className="flex items-center gap-2">
+          {/* Titulo centrado y boton */}
+          <div className="relative flex flex-col items-center mb-4 gap-2 w-full">
+            <div className="flex items-center w-full justify-between gap-2">
               <BackButton onClick={() => navigate(-1)} />
-              <h1 className="text-xl sm:text-2xl font-bold">
+              <h1 className="text-xl sm:text-2xl font-bold text-center flex-1">
                 {isAdmin ? "Gestión de Empresas" : "Empresas"}
               </h1>
             </div>
             {isAdmin && (
-              <Button onClick={() => setShowCreateModal(true)}>+ Nueva Empresa</Button>
+              <>
+                {/* Botón en el flujo normal en móviles */}
+                <div className="w-full sm:hidden mt-2">
+                  <Button
+                    onClick={() => setShowCreateModal(true)}
+                    className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:from-indigo-600 hover:to-blue-700 transition-all text-base w-full min-w-0"
+                  >
+                    <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Nueva Empresa
+                  </Button>
+                </div>
+                {/* Botón flotante en escritorio */}
+                <div className="hidden sm:block">
+                  <div className="absolute right-0 top-0">
+                    <Button
+                      onClick={() => setShowCreateModal(true)}
+                      className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:from-indigo-600 hover:to-blue-700 transition-all text-base min-w-[180px]"
+                    >
+                      <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Nueva Empresa
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
 
-          {/* Tarjetas de conteo */}
-          {isAdmin && (
+          {/* Tarjetas de conteo: admin y asesor ven igual */}
+          {(isAdmin || currentUser?.role_id === 2) && (
             <CompaniesSummary
               total={totalEmpresas}
               active={totalActivas}
