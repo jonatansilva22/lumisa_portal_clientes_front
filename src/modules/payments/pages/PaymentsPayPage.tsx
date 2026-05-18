@@ -80,7 +80,7 @@ export default function PaymentsPayPage() {
         navigate('/client');
       } else {
         toast.success('Pago registrado correctamente.');
-        navigate('/orders/me');
+        navigate('/client');
       }
     } catch (err: any) {
       // Extrae el mensaje del backend si existe

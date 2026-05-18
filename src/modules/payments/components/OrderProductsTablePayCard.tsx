@@ -42,6 +42,14 @@ export function OrderProductsTablePayCard({ order, products }: OrderProductsTabl
           </tbody>
           <tfoot>
             <tr className="bg-gray-50 border-t border-gray-200">
+              <td colSpan={5} className="px-4 py-3 text-right font-semibold text-gray-700">
+                Precio de envío
+              </td>
+              <td className="px-4 py-3 text-right font-semibold text-gray-800">
+                ${Number(order.shipping_price ?? 0).toFixed(2)}
+              </td>
+            </tr>
+            <tr className="bg-gray-50 border-t border-gray-200">
               <td colSpan={5} className="px-4 py-3 text-right font-bold text-gray-700">
                 Total
               </td>
