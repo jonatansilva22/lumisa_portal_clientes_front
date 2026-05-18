@@ -40,9 +40,11 @@ export default function ProductsCatalogPage() {
       <div className="flex flex-1 min-h-0">
         {isAdviser ? <SidebarAdviser /> : <SidebarClient />}
         <main className="flex-1 p-4 overflow-y-auto">
-          <div className="flex items-center gap-2 mb-4">
-            <BackButton onClick={() => navigate(-1)} />
-            <h1 className="text-2xl font-bold">Productos</h1>
+          <div className="flex flex-col items-center justify-center gap-2 mb-4 relative">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2">
+              <BackButton onClick={() => navigate(-1)} />
+            </div>
+            <h1 className="text-2xl font-bold text-center w-full">Catálogo de Productos</h1>
           </div>
           <div className="mb-4">
             <ProductsFiltersBar
