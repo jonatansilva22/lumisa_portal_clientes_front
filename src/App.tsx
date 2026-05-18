@@ -18,7 +18,19 @@ function App() {
 
   return (
     <>
-      <Toaster position="bottom-right" toastOptions={{ duration: 6500 }} />
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          duration: 6500,
+          style: {
+            fontSize: '1.15rem',
+            minWidth: '340px',
+            maxWidth: '420px',
+            padding: '18px 22px',
+            borderRadius: '1rem',
+          },
+        }}
+      />
       <Router>
         <AppRoutes />
       </Router>
