@@ -9,24 +9,34 @@ import { SidebarAdviser } from "../../../shared/components/Index";
 import { SidebarClient } from "../../../shared/components/Index";
 import { BackButton } from "../../../shared/ui/BackButton";
 import { useChat } from "../hooks/useChat";
-import type { Chat } from "../types/chat";
+import type { Chat, ChatSocketEvent } from "../types/chat";
 import type { Order } from "../../orders/types/order";
-import { getAllActiveUsers, getDirectMessages, sendDirectMessage, getMyDirectConversations, type User } from "../services/chats";
+import { createDirectChatSocket, getAllActiveUsers, getChatHttpBaseUrl, sendDirectMessage, getMyDirectConversations, getS3UploadUrl, type User } from "../services/chats";
 
 const getToken = () => useAuthStore.getState().token;
 
 async function getAllOrdersLocal(): Promise<Order[]> {
-  const res = await fetch("http://localhost:8000/orders/", {
+  const res = await fetch(`${getChatHttpBaseUrl()}/orders/`, {
     headers: { Authorization: `Bearer ${getToken()}` }
   });
   return res.json();
 }
 
 async function getMyOrdersLocal(): Promise<Order[]> {
-  const res = await fetch("http://localhost:8000/orders/me", {
+  const res = await fetch(`${getChatHttpBaseUrl()}/orders/me`, {
     headers: { Authorization: `Bearer ${getToken()}` }
   });
   return res.json();
+}
+
+function upsertMessage(messages: Chat[], message: Chat) {
+  const nextMessages = messages.some((item) => item.id === message.id)
+    ? messages.map((item) => (item.id === message.id ? message : item))
+    : [...messages, message];
+
+  return nextMessages.sort(
+    (left, right) => new Date(left.sent_at).getTime() - new Date(right.sent_at).getTime()
+  );
 }
 
 function formatTime(date: string) {
@@ -45,6 +55,16 @@ function formatDateLabel(date: string) {
 
 function isSameDay(a: string, b: string) {
   return new Date(a).toDateString() === new Date(b).toDateString();
+}
+
+function getAttachmentName(fileUrl: string) {
+  try {
+    const pathname = new URL(fileUrl).pathname;
+    const rawName = pathname.split("/").pop() ?? "Archivo adjunto";
+    return decodeURIComponent(rawName);
+  } catch {
+    return "Archivo adjunto";
+  }
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -71,6 +91,22 @@ export function ChatPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const isAdmin = user?.role_id === 1;
+
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (file?.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (event) => setFilePreview((event.target?.result as string) ?? null);
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    setFilePreview(null);
+  }, [file]);
   
   // Estado para pestañas
   const [activeTab, setActiveTab] = useState<'orders' | 'direct'>('orders');
@@ -89,6 +125,8 @@ export function ChatPage() {
   const [directMessages, setDirectMessages] = useState<Chat[]>([]);
   const [loadingDirectMessages, setLoadingDirectMessages] = useState(false);
   const [sendingDirectMessage, setSendingDirectMessage] = useState(false);
+  const directSocketRef = useRef<WebSocket | null>(null);
+  const directReconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const [searchConv, setSearchConv] = useState("");
   const { messages, loading, sending, handleSend } = useChat(selectedOrder ?? 0);
@@ -164,32 +202,95 @@ export function ChatPage() {
 
   // Cargar mensajes directos cuando se selecciona un usuario
   useEffect(() => {
-    if (selectedUser && activeTab === 'direct') {
-      let isInitialLoad = true;
-      
-      const fetchDirectMessages = async () => {
-        if (isInitialLoad) {
-          setLoadingDirectMessages(true);
-        }
-        
-        try {
-          const data = await getDirectMessages(selectedUser);
-          setDirectMessages(data);
-        } catch {
-          setDirectMessages([]);
-        } finally {
-          if (isInitialLoad) {
-            setLoadingDirectMessages(false);
-            isInitialLoad = false;
-          }
-        }
-      };
-      
-      fetchDirectMessages();
-      
-      const interval = setInterval(fetchDirectMessages, 3000);
-      return () => clearInterval(interval);
+    if (directReconnectTimeoutRef.current) {
+      clearTimeout(directReconnectTimeoutRef.current);
+      directReconnectTimeoutRef.current = null;
     }
+
+    if (directSocketRef.current) {
+      directSocketRef.current.close();
+      directSocketRef.current = null;
+    }
+
+    if (!selectedUser || activeTab !== 'direct') {
+      setDirectMessages([]);
+      setLoadingDirectMessages(false);
+      return;
+    }
+
+    let isActive = true;
+
+    const connect = () => {
+      if (!isActive) {
+        return;
+      }
+
+      setLoadingDirectMessages(true);
+
+      try {
+        const socket = createDirectChatSocket(selectedUser);
+        directSocketRef.current = socket;
+
+        socket.onmessage = (event) => {
+          const payload = JSON.parse(event.data) as ChatSocketEvent;
+
+          if (payload.type === 'history') {
+            setDirectMessages(Array.isArray(payload.messages) ? payload.messages : []);
+            setLoadingDirectMessages(false);
+            return;
+          }
+
+          if (payload.type === 'message_created' || payload.type === 'message_read') {
+            setDirectMessages((currentMessages) => upsertMessage(currentMessages, payload.message));
+            setLoadingDirectMessages(false);
+            return;
+          }
+
+          if (payload.type === 'error') {
+            toast.error(payload.detail);
+            setLoadingDirectMessages(false);
+          }
+        };
+
+        socket.onerror = () => {
+          if (isActive) {
+            setLoadingDirectMessages(false);
+          }
+        };
+
+        socket.onclose = () => {
+          if (directSocketRef.current === socket) {
+            directSocketRef.current = null;
+          }
+
+          if (!isActive) {
+            return;
+          }
+
+          setLoadingDirectMessages(false);
+          directReconnectTimeoutRef.current = setTimeout(connect, 2000);
+        };
+      } catch {
+        setLoadingDirectMessages(false);
+        toast.error('No se pudo conectar al chat directo en tiempo real');
+      }
+    };
+
+    connect();
+
+    return () => {
+      isActive = false;
+
+      if (directReconnectTimeoutRef.current) {
+        clearTimeout(directReconnectTimeoutRef.current);
+        directReconnectTimeoutRef.current = null;
+      }
+
+      if (directSocketRef.current) {
+        directSocketRef.current.close();
+        directSocketRef.current = null;
+      }
+    };
   }, [selectedUser, activeTab]);
 
   useEffect(() => {
@@ -214,9 +315,10 @@ export function ChatPage() {
   const selectedOrderData = orders.find((o) => o.id === selectedOrder);
   const selectedUserData = users.find((u) => u.id === selectedUser);
 
-  // Enviar mensaje de pedido
+
+  // Enviar mensaje de pedido (con archivo)
   const onSend = async () => {
-    if (!message.trim() || selectedOrder === null) return;
+    if ((!message.trim() && !file) || selectedOrder === null) return;
 
     const receiverId = isAdmin
       ? selectedOrderData?.client?.id
@@ -227,20 +329,77 @@ export function ChatPage() {
       return;
     }
 
-    await handleSend({ order_id: selectedOrder, receiver_id: receiverId, message: message.trim() });
+    let file_url: string | undefined = undefined;
+    if (file) {
+      setUploading(true);
+      try {
+        const { upload_url, object_url } = await getS3UploadUrl(file.name, file.type);
+        await fetch(upload_url, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        file_url = object_url;
+      } catch (err) {
+        toast.error("Error al subir archivo");
+        setUploading(false);
+        return;
+      }
+      setUploading(false);
+    }
+
+    await handleSend({ order_id: selectedOrder, receiver_id: receiverId, message: message.trim(), file_url });
     setMessage("");
+    setFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // Enviar mensaje directo
+
+  // Enviar mensaje directo (con archivo)
   const onSendDirect = async () => {
-    if (!message.trim() || selectedUser === null) return;
+    if ((!message.trim() && !file) || selectedUser === null) return;
 
     setSendingDirectMessage(true);
+    let file_url: string | undefined = undefined;
+    if (file) {
+      setUploading(true);
+      try {
+        const { upload_url, object_url } = await getS3UploadUrl(file.name, file.type);
+        await fetch(upload_url, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        file_url = object_url;
+      } catch (err) {
+        toast.error("Error al subir archivo");
+        setUploading(false);
+        setSendingDirectMessage(false);
+        return;
+      }
+      setUploading(false);
+    }
     try {
-      await sendDirectMessage(selectedUser, message.trim());
+      const socket = directSocketRef.current;
+
+      if (socket?.readyState === WebSocket.OPEN) {
+        socket.send(
+          JSON.stringify({
+            action: 'send_message',
+            message: message.trim(),
+            file_url,
+          })
+        );
+      } else {
+        const createdMessage = await sendDirectMessage(selectedUser, message.trim(), file_url);
+        setDirectMessages((currentMessages) => upsertMessage(currentMessages, createdMessage));
+      }
+
       setMessage("");
-      const data = await getDirectMessages(selectedUser);
-      setDirectMessages(data);
+      setFile(null);
+      setFilePreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
       toast.error("Error al enviar mensaje");
     } finally {
@@ -474,6 +633,7 @@ export function ChatPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-1">
+              {/* Mensajes */}
               {(activeTab === 'orders' && !selectedOrder) || (activeTab === 'direct' && !selectedUser) ? (
                 <div className="flex flex-col justify-center items-center h-full gap-2">
                   <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-3xl">💬</div>
@@ -499,6 +659,8 @@ export function ChatPage() {
                 currentMessages.map((msg: Chat, i: number) => {
                   const isMe = msg.sender_id === user?.id;
                   const showDate = i === 0 || !isSameDay(msg.sent_at, currentMessages[i - 1].sent_at);
+                  const isImage = msg.file_url && (msg.file_url.endsWith('.jpg') || msg.file_url.endsWith('.jpeg') || msg.file_url.endsWith('.png') || msg.file_url.endsWith('.gif') || msg.file_url.endsWith('.webp'));
+                  const attachmentName = msg.file_url ? getAttachmentName(msg.file_url) : null;
                   return (
                     <div key={msg.id}>
                       {showDate && (
@@ -514,7 +676,38 @@ export function ChatPage() {
                         </div>
                         <div className={`flex flex-col gap-0.5 max-w-[70%] md:max-w-xs lg:max-w-md ${isMe ? "items-end" : "items-start"}`}>
                           <div className={`px-4 py-2.5 text-sm shadow-sm ${isMe ? "bg-blue-600 text-white rounded-2xl rounded-br-sm" : "bg-white text-gray-800 rounded-2xl rounded-bl-sm border border-gray-100"}`}>
-                            <p className="leading-relaxed">{msg.message}</p>
+                            {msg.file_url && (
+                              <div className="mb-1">
+                                {isImage ? (
+                                  <a href={msg.file_url} target="_blank" rel="noopener noreferrer">
+                                    <img src={msg.file_url} alt="archivo" className="max-h-40 max-w-xs rounded-lg border border-gray-200 shadow-sm" />
+                                  </a>
+                                ) : (
+                                  <a
+                                    href={msg.file_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`flex items-center gap-3 rounded-xl border px-3 py-2 transition hover:opacity-90 ${
+                                      isMe
+                                        ? "border-white/20 bg-white/15 text-white"
+                                        : "border-gray-200 bg-gray-50 text-gray-800"
+                                    }`}
+                                  >
+                                    <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${isMe ? "bg-white/20 text-white" : "bg-blue-100 text-blue-600"}`}>
+                                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7V5a2 2 0 012-2h6l4 4v12a2 2 0 01-2 2H9a2 2 0 01-2-2V7z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 3v4h4" />
+                                      </svg>
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="truncate text-sm font-medium">{attachmentName}</p>
+                                      <p className={`text-xs ${isMe ? "text-blue-100" : "text-gray-500"}`}>Abrir archivo</p>
+                                    </div>
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                            {msg.message && <p className="leading-relaxed whitespace-pre-line">{msg.message}</p>}
                           </div>
                           <div className={`flex items-center gap-1 px-1 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
                             <span className="text-[10px] text-gray-400">{formatTime(msg.sent_at)}</span>
@@ -534,7 +727,50 @@ export function ChatPage() {
             </div>
 
             {((!isAdmin && activeTab === 'orders') || activeTab === 'direct') && (
-              <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center gap-2">
+              <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center gap-2 relative">
+                {/* Adjuntar archivo */}
+                {/* Icono para adjuntar archivo */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  style={{ display: "none" }}
+                  onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (f && f.size > 10 * 1024 * 1024) {
+                      toast.error("El archivo no puede ser mayor a 10MB");
+                      return;
+                    }
+                    setFile(f || null);
+                  }}
+                  accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.txt,.zip,.rar,.7z,.csv,.ppt,.pptx,.doc,.docx"
+                />
+                <button
+                  type="button"
+                  className={`w-10 h-10 rounded-full cursor-pointer flex items-center justify-center transition-colors ${file ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500 hover:bg-blue-200'}`}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading || currentSending}
+                  title="Adjuntar archivo"
+                  style={{ marginRight: 4 }}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l7.07-7.07a4 4 0 10-5.656-5.657l-8.485 8.485a6 6 0 108.485 8.485l7.07-7.07" />
+                  </svg>
+                </button>
+                {/* Preview archivo seleccionado */}
+                {file && (
+                  <div className="flex items-center gap-2 ml-2">
+                    {filePreview && file.type.startsWith("image/") ? (
+                      <img src={filePreview} alt="preview" className="w-10 h-10 object-cover rounded border border-gray-200" />
+                    ) : (
+                      <span className="text-xs text-gray-600 font-medium truncate max-w-[100px]">{file.name}</span>
+                    )}
+                    <button type="button" className="text-red-500 hover:text-red-700" onClick={() => { setFile(null); setFilePreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} title="Quitar archivo">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
                 <input
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -542,15 +778,23 @@ export function ChatPage() {
                   placeholder="Escribe un mensaje..."
                   disabled={activeTab === 'orders' ? !selectedOrder : !selectedUser}
                   className="flex-1 bg-gray-100 border border-transparent rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-blue-300 transition-colors disabled:opacity-50"
+                  style={{ marginLeft: file ? 0 : 8 }}
                 />
                 <button
                   onClick={activeTab === 'orders' ? onSend : onSendDirect}
-                  disabled={currentSending || !message.trim() || (activeTab === 'orders' ? !selectedOrder : !selectedUser)}
-                  className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                  disabled={currentSending || uploading || (!message.trim() && !file) || (activeTab === 'orders' ? !selectedOrder : !selectedUser)}
+                  className="w-10 h-10 cursor-pointer rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 ml-0.5">
-                    <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-                  </svg>
+                  {uploading ? (
+                    <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 ml-0.5">
+                      <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                    </svg>
+                  )}
                 </button>
               </div>
             )}
