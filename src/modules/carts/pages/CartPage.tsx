@@ -111,8 +111,14 @@ export default function CartPage() {
                     totalItems={totalItems}
                     onCheckout={handleCheckout}
                     loading={loading || checkoutLoading}
-                    disabled={!!hasInactive}
-                    inactiveMessage={hasInactive ? "No puedes solicitar el pedido porque hay productos no disponibles." : undefined}
+                    disabled={!!hasInactive || isAdviser}
+                    inactiveMessage={
+                      hasInactive
+                        ? "No puedes solicitar el pedido porque hay productos no disponibles."
+                        : isAdviser
+                        ? "Los asesores no pueden solicitar pedidos, solo agregar productos al carrito."
+                        : undefined
+                    }
                   />
                 </div>
               </div>
