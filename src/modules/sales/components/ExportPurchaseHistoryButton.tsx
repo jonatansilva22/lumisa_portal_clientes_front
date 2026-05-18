@@ -3,11 +3,14 @@ import type { PurchaseHistory } from '../types';
 
 function toCSV(purchases: PurchaseHistory[]): string {
   const title = 'Historial de Compras - Lumisa Comercializadora';
-  const header = ['Folio', 'Empresa', 'Total', 'Pagado en'];
+  const header = ['Folio', 'Empresa', 'Productos', 'Precio productos', 'Envío', 'Total', 'Pagado en'];
   const rows = purchases.map(p => [
     p.folio,
     p.company_name ?? '-',
-    p.total_payment,
+    p.product_names?.join(' | ') ?? '-',
+    p.products_price?.toLocaleString('es-MX', {minimumFractionDigits:2}) ?? '0.00',
+    p.shipping_price?.toLocaleString('es-MX', {minimumFractionDigits:2}) ?? '0.00',
+    p.total_price?.toLocaleString('es-MX', {minimumFractionDigits:2}) ?? '0.00',
     new Date(p.paid_at).toLocaleDateString('es-MX'),
   ]);
   return [title, '', header.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -22,11 +25,14 @@ async function handleExportPDF(purchases: PurchaseHistory[]) {
   const title = 'Historial de Compras - Lumisa Comercializadora';
   doc.setFontSize(16);
   doc.text(title, 14, 16);
-  const tableColumn = ['Folio', 'Empresa', 'Total', 'Pagado en'];
+  const tableColumn = ['Folio', 'Empresa', 'Productos', 'Precio productos', 'Envío', 'Total', 'Pagado en'];
   const tableRows = purchases.map(p => [
     p.folio,
     p.company_name ?? '-',
-    `$${p.total_payment.toLocaleString('es-MX', {minimumFractionDigits:2})}`,
+    p.product_names?.join(' | ') ?? '-',
+    `$${p.products_price?.toLocaleString('es-MX', {minimumFractionDigits:2}) ?? '0.00'}`,
+    `$${p.shipping_price?.toLocaleString('es-MX', {minimumFractionDigits:2}) ?? '0.00'}`,
+    `$${p.total_price?.toLocaleString('es-MX', {minimumFractionDigits:2}) ?? '0.00'}`,
     new Date(p.paid_at).toLocaleDateString('es-MX'),
   ]);
   autoTable(doc, {

@@ -6,6 +6,11 @@ export interface PurchaseHistory {
   company_name: string;
   total_payment: number;
   paid_at: string; // ISO date
+  // Nuevos campos
+  product_names: string[];
+  products_price: number;
+  shipping_price: number;
+  total_price: number;
 }
 
 export interface PurchaseHistorySummary {

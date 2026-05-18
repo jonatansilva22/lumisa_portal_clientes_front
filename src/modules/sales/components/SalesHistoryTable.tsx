@@ -13,9 +13,12 @@ export function SalesHistoryTable({ sales, loading, error }: SalesHistoryTablePr
       <Table
         columns={[
           { header: <span className="text-base font-bold">Folio</span>, accessor: "folio" },
-          { header: <span className="text-base font-bold">Cliente</span>, accessor: (row: any) => row.client?.name ?? row.client_name ?? '-' },
-          { header: <span className="text-base font-bold">Empresa</span>, accessor: (row: any) => row.company?.name ?? row.company_name ?? '-' },
-          { header: <span className="text-base font-bold">Total</span>, accessor: (row: SaleHistory) => `$${row.total_payment.toLocaleString('es-MX', {minimumFractionDigits:2})}` },
+          { header: <span className="text-base font-bold">Cliente</span>, accessor: (row: any) => row.client_name ?? '-' },
+          { header: <span className="text-base font-bold">Empresa</span>, accessor: (row: any) => row.company_name ?? '-' },
+          { header: <span className="text-base font-bold">Productos</span>, accessor: (row: SaleHistory) => row.product_names?.join(', ') ?? '-' },
+          { header: <span className="text-base font-bold">Precio productos</span>, accessor: (row: SaleHistory) => `$${row.products_price.toLocaleString('es-MX', {minimumFractionDigits:2})}` },
+          { header: <span className="text-base font-bold">Envío</span>, accessor: (row: SaleHistory) => `$${row.shipping_price.toLocaleString('es-MX', {minimumFractionDigits:2})}` },
+          { header: <span className="text-base font-bold">Total</span>, accessor: (row: SaleHistory) => `$${row.total_price.toLocaleString('es-MX', {minimumFractionDigits:2})}` },
           { header: <span className="text-base font-bold">Pagado en</span>, accessor: (row: SaleHistory) => new Date(row.paid_at).toLocaleDateString('es-MX') },
         ]}
         data={sales}

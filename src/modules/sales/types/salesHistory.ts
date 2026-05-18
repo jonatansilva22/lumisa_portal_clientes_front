@@ -2,16 +2,17 @@
 export interface SaleHistory {
   order_id: number;
   folio: string;
-  client: {
-    id: number;
-    name: string;
-  };
-  company: {
-    id: number;
-    name: string;
-  };
+  client_id: number;
+  client_name: string;
+  company_id: number;
+  company_name: string;
   total_payment: number;
   paid_at: string; // ISO date
+  // Nuevos campos
+  product_names: string[];
+  products_price: number;
+  shipping_price: number;
+  total_price: number;
 }
 
 export interface SalesHistorySummary {

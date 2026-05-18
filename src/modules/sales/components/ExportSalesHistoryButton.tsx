@@ -3,12 +3,15 @@ import type { SaleHistory } from '../types/salesHistory';
 
 function toCSV(sales: SaleHistory[]): string {
   const title = 'Historial de Ventas - Lumisa Comercializadora';
-  const header = ['Folio', 'Cliente', 'Empresa', 'Total', 'Pagado en'];
+  const header = ['Folio', 'Cliente', 'Empresa', 'Productos', 'Precio productos', 'Envío', 'Total', 'Pagado en'];
   const rows = sales.map(sale => [
     sale.folio,
-    (sale.client?.name ?? (sale as any).client_name ?? '-'),
-    (sale.company?.name ?? (sale as any).company_name ?? '-'),
-    sale.total_payment,
+    sale.client_name ?? '-',
+    sale.company_name ?? '-',
+    sale.product_names?.join(' | ') ?? '-',
+    sale.products_price?.toLocaleString('es-MX', {minimumFractionDigits:2}) ?? '0.00',
+    sale.shipping_price?.toLocaleString('es-MX', {minimumFractionDigits:2}) ?? '0.00',
+    sale.total_price?.toLocaleString('es-MX', {minimumFractionDigits:2}) ?? '0.00',
     new Date(sale.paid_at).toLocaleDateString('es-MX'),
   ]);
   return [title, '', header.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -23,12 +26,15 @@ async function handleExportPDF(sales: SaleHistory[]) {
   const title = 'Historial de Ventas - Lumisa Comercializadora';
   doc.setFontSize(16);
   doc.text(title, 14, 16);
-  const tableColumn = ['Folio', 'Cliente', 'Empresa', 'Total', 'Pagado en'];
+  const tableColumn = ['Folio', 'Cliente', 'Empresa', 'Productos', 'Precio productos', 'Envío', 'Total', 'Pagado en'];
   const tableRows = sales.map(sale => [
     sale.folio,
-    (sale.client?.name ?? (sale as any).client_name ?? '-'),
-    (sale.company?.name ?? (sale as any).company_name ?? '-'),
-    `$${sale.total_payment.toLocaleString('es-MX', {minimumFractionDigits:2})}`,
+    sale.client_name ?? '-',
+    sale.company_name ?? '-',
+    sale.product_names?.join(' | ') ?? '-',
+    `$${sale.products_price?.toLocaleString('es-MX', {minimumFractionDigits:2}) ?? '0.00'}`,
+    `$${sale.shipping_price?.toLocaleString('es-MX', {minimumFractionDigits:2}) ?? '0.00'}`,
+    `$${sale.total_price?.toLocaleString('es-MX', {minimumFractionDigits:2}) ?? '0.00'}`,
     new Date(sale.paid_at).toLocaleDateString('es-MX'),
   ]);
   autoTable(doc, {
