@@ -7,18 +7,12 @@ import { Modal } from "../../../shared/components/Modal";
 const schema = z.object({
   name: z.string().min(1, "La razón social es requerida"),
   address: z.string().min(1, "La dirección es requerida"),
-  phone: z.preprocess(
-    (val) => (val === "" ? undefined : val),
-    z.string().optional()
-  ),
-  email: z.preprocess(
-    (val) => (val === "" ? undefined : val),
-    z.string().email("Correo inválido").optional()
-  ),
-  observations: z.preprocess(
-    (val) => (val === "" ? undefined : val),
-    z.string().optional()
-  ),
+  phone: z.string().optional(),
+  email: z.union([
+    z.literal(""),
+    z.string().email("Correo inválido")
+  ]).optional(),
+  observations: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;

@@ -27,7 +27,7 @@ export function SidebarClient() {
   };
 
   return (
-    <aside className="bg-neutral-800 text-white w-48 flex flex-col py-6 px-2 h-full">
+    <aside className="bg-gradient-to-b from-blue-200 via-blue-100 to-blue-300 text-blue-900 w-48 flex flex-col py-6 px-2 h-full border-r border-blue-200/60">
       <div className="mb-8">
         <Logo src={LumisaLogo} className="h-20 w-30" />
       </div>

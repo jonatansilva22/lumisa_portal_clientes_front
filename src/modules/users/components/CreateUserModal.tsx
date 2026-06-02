@@ -18,19 +18,15 @@ const createUserSchema = z.object({
     .regex(/[A-Z]/, "Debe tener al menos una mayúscula")
     .regex(/[!@#$%^&*(),.?\":{}|<>_\-+=/\\]/, "Debe tener al menos un carácter especial"),
   confirm_password: z.string(),
-  role_id: z.number({
-    required_error: "Selecciona un rol",
-    invalid_type_error: "Selecciona un rol",
-  }),
-  company_id: z.preprocess(
-    (val) => (isNaN(val as number) || val === 0 ? undefined : val),
-    z.number({ invalid_type_error: "Selecciona una empresa" }).optional().nullable()
-  ),
+  // ✅ Fix 1: Zod v4 ya no acepta required_error/invalid_type_error, usa error
+  role_id: z.number({ error: "Selecciona un rol" }),
+  // ✅ Fix 2: Eliminar z.preprocess, manejar NaN en refine y onSubmit
+  company_id: z.number().nullable().optional(),
 }).refine((d) => d.password === d.confirm_password, {
   message: "Las contraseñas no coinciden",
   path: ["confirm_password"],
 }).refine((d) => {
-  if (d.role_id === 3 && !d.company_id) return false;
+  if (d.role_id === 3 && (!d.company_id || isNaN(d.company_id))) return false;
   return true;
 }, {
   message: "Selecciona una empresa para el cliente",
@@ -70,8 +66,8 @@ export function CreateUserModal({ onClose, onCreate }: Props) {
     if (imageFile) {
       try {
         setUploading(true);
+        // ✅ Fix 3: Eliminar module, no existe en el tipo de getS3UploadUrl
         const { upload_url, object_url } = await getS3UploadUrl({
-          module: "users",
           filename: imageFile.name,
           contentType: imageFile.type,
         });
@@ -88,7 +84,10 @@ export function CreateUserModal({ onClose, onCreate }: Props) {
     onCreate({
       ...rest,
       image_url,
-      company_id: selectedRole === 3 ? (data.company_id ?? null) : null,
+      // ✅ Fix 2 cont: manejar NaN correctamente
+      company_id: selectedRole === 3
+        ? (data.company_id && !isNaN(data.company_id) ? data.company_id : null)
+        : null,
     });
   };
 

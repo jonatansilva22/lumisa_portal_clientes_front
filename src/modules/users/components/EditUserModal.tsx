@@ -9,7 +9,8 @@ import { getS3UploadUrl, uploadFileToS3 } from "../services/s3";
 import { Modal } from "../../../shared/components/Modal";
 
 const editUserSchema = z.object({
-  role_id: z.number({ invalid_type_error: "Selecciona un rol" }),
+  // ✅ Fix 1: invalid_type_error → error (Zod v4)
+  role_id: z.number({ error: "Selecciona un rol" }),
   company_id: z.number().optional().nullable(),
 });
 
@@ -52,13 +53,11 @@ export function EditUserModal({ user, onClose, onUpdate }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar tipo de archivo
     if (!file.type.startsWith("image/")) {
       toast.error("Solo se permiten imágenes");
       return;
     }
 
-    // Validar tamaño (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("La imagen no debe superar 5MB");
       return;
@@ -66,7 +65,6 @@ export function EditUserModal({ user, onClose, onUpdate }: Props) {
 
     setSelectedFile(file);
     
-    // Crear preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result as string);
@@ -85,12 +83,11 @@ export function EditUserModal({ user, onClose, onUpdate }: Props) {
   const onSubmit = async (data: FormData) => {
     setUploadingImage(true);
     try {
-      let imageUrl = user.image_url; // URL actual por defecto
+      let imageUrl = user.image_url;
 
-      // Si hay nueva imagen, subirla a S3
       if (selectedFile) {
+        // ✅ Fix 2: Eliminar module, no existe en el tipo de getS3UploadUrl
         const { upload_url, object_url } = await getS3UploadUrl({
-          module: "users",
           filename: `${Date.now()}_${selectedFile.name}`,
           contentType: selectedFile.type,
         });
@@ -121,7 +118,6 @@ export function EditUserModal({ user, onClose, onUpdate }: Props) {
       {/* Info del usuario con foto editable */}
       <div className="mb-4 p-4 bg-gray-50 rounded-xl">
         <div className="flex items-center gap-4">
-          {/* Foto de perfil */}
           <div className="relative">
             {imagePreview ? (
               <img 
@@ -139,7 +135,6 @@ export function EditUserModal({ user, onClose, onUpdate }: Props) {
               </div>
             )}
             
-            {/* Botón de cambiar/quitar foto */}
             {imagePreview && (
               <button
                 type="button"
@@ -154,7 +149,6 @@ export function EditUserModal({ user, onClose, onUpdate }: Props) {
             )}
           </div>
 
-          {/* Info y botón de cambiar foto */}
           <div className="flex-1">
             <p className="font-semibold text-gray-800">{user.name} {user.last_name}</p>
             <p className="text-sm text-gray-400 mb-2">{user.email}</p>
