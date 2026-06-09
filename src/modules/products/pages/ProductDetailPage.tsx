@@ -15,7 +15,7 @@ export default function ProductDetailPage() {
   const { products, types, units } = useProducts();
   const product = products.find(p => String(p.id) === String(id));
   const [quantity, setQuantity] = useState(1);
-  const { addToCart, cart, loading, error } = useCart();
+  const { addToCart, cart, loading } = useCart();
   const { isAdmin, isAdviser } = useAuth();
 
   // Mostrar spinner si los datos aún no están listos

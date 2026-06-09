@@ -32,7 +32,7 @@ export function OrdersFiltersBar({
   onSortDescChange,
   assignmentFilter,
   onAssignmentFilterChange,
-  userName,
+  userName: _userName,
 }: OrdersFiltersBarProps) {
   return (
     <div className="w-full flex justify-center">

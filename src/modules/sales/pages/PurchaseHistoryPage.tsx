@@ -21,7 +21,6 @@ export default function PurchaseHistoryPage() {
     endDate,
     setEndDate,
     refetch,
-    customActive,
     setCustomActive,
   } = usePurchaseHistory();
   const [showCustom, setShowCustom] = useState(false);

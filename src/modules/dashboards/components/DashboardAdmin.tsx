@@ -1,5 +1,4 @@
 
-import React from "react";
 import ChartsSection from "./ChartsSection";
 import DashboardInfoCard from "./DashboardInfoCard";
 import {

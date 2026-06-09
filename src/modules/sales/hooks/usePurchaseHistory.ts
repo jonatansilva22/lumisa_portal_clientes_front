@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { getPurchaseHistory } from '../services/salesHistoryPurchases';
 import type { PurchaseHistory, PurchaseHistoryPeriod } from '../types/salesHistoryPurchases';
 

@@ -14,7 +14,7 @@ import { ViewCompanyModal } from "../components/ViewCompanyModal";
 import { ConfirmModal } from "../components/ConfirmModal";
 import { CompaniesSummary } from "../components/CompaniesSummary";
 import { CompaniesFiltersBar } from "../components/CompaniesFiltersBar";
-import type { Company, CompanyCreate } from "../types/company";
+import type { Company } from "../types/company";
 import { TrashIcon } from "@heroicons/react/24/outline";
 
 export function CompaniesPage() {

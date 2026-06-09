@@ -1,5 +1,4 @@
 import type { CartDetail } from "../types/cart";
-import { Button } from "../../../shared/ui/Button";
 import { QuantityInput } from "../../../shared/ui/QuantityInput";
 import { DeleteButton } from "../../../shared/ui/DeleteButton";
 import { useProducts } from "../../products/hooks/useProducts";

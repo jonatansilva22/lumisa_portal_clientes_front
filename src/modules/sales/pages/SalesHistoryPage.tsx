@@ -24,7 +24,6 @@ export default function SalesHistoryPage() {
     endDate,
     setEndDate,
     refetch,
-    customActive,
     setCustomActive,
   } = useSalesHistory();
   const [showCustom, setShowCustom] = useState(false);

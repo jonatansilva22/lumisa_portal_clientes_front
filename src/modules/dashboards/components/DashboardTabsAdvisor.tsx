@@ -3,11 +3,7 @@ import DashboardAdvisor from './DashboardAdvisor';
 import type { AdvisorDashboard } from '../types/dashboard';
 import {
   UserGroupIcon,
-  BuildingOffice2Icon,
-  ShoppingBagIcon,
-  CurrencyDollarIcon,
   ChartPieIcon,
-  CubeIcon,
 } from '@heroicons/react/24/outline';
 
 interface DashboardTabsAdvisorProps {

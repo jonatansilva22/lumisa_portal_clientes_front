@@ -1,6 +1,5 @@
-import react from "react";
 import { LoadingSpinner } from "../../../shared/ui/Index";
-import { SidebarClient, Modal, Header } from "../../../shared/components/Index";
+import { SidebarClient, Header } from "../../../shared/components/Index";
 
 export function EjemploPage() {
   return (

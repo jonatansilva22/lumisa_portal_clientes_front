@@ -8,7 +8,7 @@ type ModalProps = {
   showHeader?: boolean; // 
 };
 
-export function Modal({ open, onClose, children, className = "", showHeader = true }: ModalProps) {
+export function Modal({ open, onClose, children, className: _className = "", showHeader = true }: ModalProps) {
   if (!open) return null;
 
   return (

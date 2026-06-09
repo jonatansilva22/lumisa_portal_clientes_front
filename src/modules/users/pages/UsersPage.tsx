@@ -15,7 +15,7 @@ import { ConfirmModal } from "../components/ConfirmModal";
 import { UsersSummary } from "../components/UsersSummary";
 import { UsersFiltersBar } from "../components/UsersFiltersBar";
 import { getCompanies } from "../services/companies";
-import type { User, UserCreate } from "../types/user";
+import type { User } from "../types/user";
 import { TrashIcon } from "@heroicons/react/24/outline";
 
 export function UsersPage() {

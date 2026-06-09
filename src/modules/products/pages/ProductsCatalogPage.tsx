@@ -4,7 +4,6 @@ import { BackButton } from "../../../shared/ui/BackButton";
 import { useProducts } from "../hooks/useProducts";
 import { ProductCard } from "../components/ProductCard";
 import { ProductsFiltersBar } from "../components/ProductsFiltersBar";
-import type { Product } from "../types/product";
 import { Header, SidebarClient, SidebarAdviser } from "../../../shared/components/Index";
 import { useAuth } from '../../../shared/hooks/useAuth';
 import {LoadingSpinner} from "../../../shared/ui/LoadingSpinner";
@@ -16,7 +15,6 @@ export default function ProductsCatalogPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("Todos");
   const [unitFilter, setUnitFilter] = useState("Todos");
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [sortDesc, setSortDesc] = useState(true);
   const [visibleCount, setVisibleCount] = useState(30);
   const { isAdviser } = useAuth();

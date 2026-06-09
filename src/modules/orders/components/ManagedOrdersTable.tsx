@@ -47,12 +47,6 @@ function resolveClientImage(order: Order, clientImageById: Record<number, string
   return (order as any)?.client?.image_url || (order as any)?.client_image_url || null;
 }
 
-function initialsFromName(name: string): string {
-  const parts = name.split(" ").filter(Boolean);
-  if (parts.length === 0) return "CL";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
-}
 
 function resolveCompanyName(order: Order): string {
   return order.company?.name || (order as any).company_name || (order as any)?.company?.name || "Empresa sin nombre";

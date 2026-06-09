@@ -9,7 +9,7 @@ interface PaymentMethodSelectProps {
   disabled?: boolean;
 }
 
-export function PaymentMethodSelect({ methods, value, onChange, disabled }: PaymentMethodSelectProps) {
+export function PaymentMethodSelect({ methods, value, onChange, disabled: _disabled }: PaymentMethodSelectProps) {
   const options = methods.map((method) => ({ value: String(method.id), label: method.name }));
   return (
     <Select

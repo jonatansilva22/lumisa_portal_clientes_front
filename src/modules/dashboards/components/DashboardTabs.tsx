@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import DashboardAdmin from './DashboardAdmin';
-import DashboardAdvisor from './DashboardAdvisor';
-import DashboardClient from './DashboardClient';
 import type { AdminDashboard, AdvisorDashboard, ClientDashboard } from '../types/dashboard';
 import {
   CubeIcon,
@@ -25,7 +23,7 @@ const TABS = [
   { key: 'pedidos', label: 'Pedidos', icon: <ShoppingBagIcon className="w-5 h-5 mr-1" /> },
 ];
 
-export function DashboardTabs({ adminData, advisorData, clientData }: DashboardTabsProps) {
+export function DashboardTabs({ adminData, advisorData: _advisorData, clientData: _clientData }: DashboardTabsProps) {
   const [tab, setTab] = useState('productos');
 
   return (
@@ -64,7 +62,6 @@ export function DashboardTabs({ adminData, advisorData, clientData }: DashboardT
         {tab === 'pedidos' && adminData && (
           <DashboardAdmin data={adminData} section="Pedidos" />
         )}
-        {/* Puedes agregar lógica similar para advisorData y clientData si lo deseas */}
       </div>
     </div>
   );

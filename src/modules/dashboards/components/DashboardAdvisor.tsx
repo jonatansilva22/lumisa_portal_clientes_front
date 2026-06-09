@@ -5,12 +5,10 @@ import { Card } from '../../../shared/ui/Card';
 import type { AdvisorDashboard } from '../types/dashboard';
 import {
   UserGroupIcon,
-  UserIcon,
   ShoppingBagIcon,
   CubeIcon,
   CurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
-
 
 interface Props {
   data: AdvisorDashboard;
@@ -18,107 +16,10 @@ interface Props {
   showChartsOnly?: boolean;
 }
 
-
 import { BuildingOffice2Icon } from '@heroicons/react/24/outline';
 
 export default function DashboardAdvisor({ data, showInfoOnly, showChartsOnly }: Props) {
-  // KPIs extendidos
-  const kpis = [
-    {
-      label: 'Clientes',
-      value: data.total_clients,
-      icon: <UserIcon className="w-7 h-7 text-green-500" />,
-      section: 'Clientes',
-    },
-    {
-      label: 'Pedidos',
-      value: data.total_orders,
-      icon: <ShoppingBagIcon className="w-7 h-7 text-orange-500" />,
-      section: 'Pedidos',
-    },
-    {
-      label: 'Productos gestionados',
-      value: data.products_managed,
-      icon: <CubeIcon className="w-7 h-7 text-indigo-500" />,
-      section: 'Productos',
-    },
-    {
-      label: 'Empresas',
-      value: data.total_companies,
-      icon: <BuildingOffice2Icon className="w-7 h-7 text-yellow-500" />,
-      section: 'Empresas',
-    },
-    {
-      label: 'Pagos pendientes',
-      value: data.payment_status.pending,
-      icon: <CurrencyDollarIcon className="w-7 h-7 text-yellow-500" />,
-      section: 'Pagos',
-    },
-    {
-      label: 'Pagos pagados',
-      value: data.payment_status.paid,
-      icon: <CurrencyDollarIcon className="w-7 h-7 text-green-500" />,
-      section: 'Pagos',
-    },
-    {
-      label: 'Pagos rechazados',
-      value: data.payment_status.rejected,
-      icon: <CurrencyDollarIcon className="w-7 h-7 text-red-500" />,
-      section: 'Pagos',
-    },
-    {
-      label: 'Pagos cancelados',
-      value: data.payment_status.cancelled,
-      icon: <CurrencyDollarIcon className="w-7 h-7 text-gray-400" />,
-      section: 'Pagos',
-    },
-  ];
 
-  // Agrupar KPIs por sección
-  const sections = [
-    {
-      title: 'Clientes',
-      icon: <UserGroupIcon className="w-8 h-8 text-blue-500" />,
-      kpis: kpis.filter(k => k.section === 'Clientes'),
-    },
-    {
-      title: 'Empresas',
-      icon: <BuildingOffice2Icon className="w-8 h-8 text-yellow-500" />,
-      kpis: kpis.filter(k => k.section === 'Empresas'),
-    },
-    {
-      title: 'Pedidos',
-      icon: <ShoppingBagIcon className="w-8 h-8 text-orange-500" />,
-      kpis: kpis.filter(k => k.section === 'Pedidos'),
-    },
-    {
-      title: 'Pagos',
-      icon: <CurrencyDollarIcon className="w-8 h-8 text-emerald-500" />,
-      kpis: kpis.filter(k => k.section === 'Pagos'),
-    },
-    {
-      title: 'Productos',
-      icon: <CubeIcon className="w-8 h-8 text-indigo-500" />,
-      kpis: kpis.filter(k => k.section === 'Productos'),
-    },
-  ];
-
-  // Leyenda para pedidos por estado
-  function PieLegend({ labels, colors, values }: { labels: string[]; colors: string[]; values: number[] }) {
-    return (
-      <ul className="dashboard-pie-legend text-sm mt-2 grid grid-cols-2 gap-x-4 gap-y-2 w-full">
-        {labels.map((label, i) => (
-          <li key={label} className="flex items-center gap-2 text-base">
-            <span className="inline-block w-4 h-4 rounded mr-2" style={{ background: colors[i] }}></span>
-            <span>{label}:</span>
-            <span className="font-bold text-lg">{values[i]}</span>
-          </li>
-        ))}
-      </ul>
-    );
-  }
-
-  // Colores personalizados para pedidos por estado
   const ordersStateColors = data.orders_pie.labels.map(label => {
     const map: Record<string, string> = {
       'Pendiente': '#fbbf24',
@@ -130,13 +31,8 @@ export default function DashboardAdvisor({ data, showInfoOnly, showChartsOnly }:
     return map[label] || '#38bdf8';
   });
 
-  // Pie chart de empresas
- 
-
-  // Layout responsive y compacto
   return (
     <div className="flex flex-col gap-12">
-      {/* Título principal centrado */}
       {(!showChartsOnly && !showInfoOnly) && (
         <h1 className="text-3xl font-bold mb-6 text-center">Dashboard de Asesor</h1>
       )}
@@ -260,7 +156,6 @@ export default function DashboardAdvisor({ data, showInfoOnly, showChartsOnly }:
               <PaymentsPieChart paymentStatus={data.payment_status} />
               <div className="w-full flex flex-col items-center mt-2">
                 <ul className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-center w-full">
-                  {/* Colores: pendientes amarillo, pagados verde, rechazados rojo, cancelados gris */}
                   <li className="flex items-center gap-2 text-base">
                     <span className="inline-block w-4 h-4 rounded" style={{ background: '#fbbf24' }}></span>
                     <span className="text-gray-700">Pendiente:</span>
@@ -284,15 +179,13 @@ export default function DashboardAdvisor({ data, showInfoOnly, showChartsOnly }:
                 </ul>
               </div>
             </Card>
-            {/* Empresas activas/inactivas (pie chart igual que admin) */}
+            {/* Empresas activas/inactivas */}
             <Card className="flex flex-col items-center justify-center">
               <div className="font-semibold text-lg mb-2 w-full text-center">Empresas activas/inactivas</div>
               {(() => {
-                // Forzar labels y colores igual que admin
                 const pie = data.companies_pie || { labels: [], values: [] };
                 let labels = pie.labels;
                 let values = pie.values;
-                // Si solo hay un label, forzar ambos
                 if (!labels || labels.length < 2) {
                   const total = Array.isArray(data.companies_info) ? data.companies_info.length : 0;
                   const active = Array.isArray(data.companies_info) ? data.companies_info.filter(e => e.active).length : 0;
